@@ -1,0 +1,35 @@
+
+#apps h1 {
+  font-size: 50px !important;
+}
+
+#apps .tituloApp {
+    color: black;
+    margin-left: 0px;
+    font-weight: 600;
+    font-size: 16px
+}
+
+#apps .empty-apps {
+  color: crimson;
+  margin-left: 0px;
+  font-weight: 600;
+  font-size: 35px
+}
+
+#apps a {
+  text-decoration: none !important;
+}
+
+#apps img {
+  transition: transform 0.3s ease-in-out;
+  margin-bottom: 10px;
+}
+
+#apps a:hover > img {
+  transform: scale(1.2); /* Aumenta el tamaño en 10% */
+}
+
+.img-app {
+  max-width: 77px;
+}

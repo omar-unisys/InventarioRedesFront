@@ -1,0 +1,50 @@
+/* styles.css */
+.input-filter {
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  border-bottom: 1px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.2);
+  background-color: transparent;
+  width: 80%;
+}
+
+.input-filter:focus {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.input-filter:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.container-fluid {
+  padding-left: 30px !important;
+  padding-right: 30px !important;
+}
+
+.modal-header {
+  background-color: #3366CC;
+  color: white;
+}
+
+.Mui-TableHeadCell-Content-Actions > button > svg {
+  fill: black !important;
+}
+
+.MuiCollapse-entered > div > div > div > div > div > span > button > svg {
+  fill: rgba(0, 0, 0, 0.3) !important;
+}
+
+.Mui-TableHeadCell-Content > div > span > button > svg {
+  fill: rgba(0, 0, 0, 0.3) !important;
+}
+
+.MuiTablePagination-root ~ .MuiButtonBase-root.Mui-disabled > svg {
+  fill: rgba(0, 0, 0, 0.3) !important;
+}
+
+.MuiTablePagination-root > div > span > .MuiButtonBase-root:not(.Mui-disabled) > svg {
+  fill: rgba(0, 0, 0, 0.8) !important;
+}

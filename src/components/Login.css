@@ -1,0 +1,130 @@
+
+#Login span {
+  color: white;
+}
+
+#Login {
+  text-align: center;
+  /* font-family: "Poppins", sans-serif; */
+}
+
+#Login .App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+#Login .fondo-con-opacidad {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url(../../public/img/background.jpg) !important; 
+  background-size: cover; /* Ajusta la imagen al tamaño del contenedor */
+  z-index: -1; /* Coloca el fondo detrás del contenido */
+}
+
+#Login .opacidad-negra {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Fondo negro opaco */
+  z-index: -1; /* Coloca el fondo con opacidad detrás del contenido */
+}
+
+#Login .contenido {
+  position: relative; /* Permite que el contenido esté por encima del fondo */
+  z-index: 1; /* Coloca el contenido sobre el fondo */
+  padding-top: 20px;
+  padding-bottom: 10px;
+  color: white; /* Ajusta el color del texto para que sea legible */
+}
+
+#contenedor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 100%;
+  height: 80px;
+}
+
+#contenedor .btn:hover {
+  font-size: 33px !important;
+  transition: all 0.3s;
+}
+
+#contenedor .btn:not(:hover) {
+  font-size: calc(100%);
+  transition: all 0.3s;
+}
+
+#contenedor .btn-lg {
+  font-size: 30px !important;
+}
+
+
+#Login .titulo {
+  font-size: 10vh;
+  line-height: 1.2;
+  /* font-family: "Poppins", sans-serif; */
+  font-weight: 500;
+  padding-top: 20px;
+}
+
+.subtitulo {
+  font-weight: normal;
+  font-size: 3vh;
+  margin-top: -20px !important;
+}
+
+#Login .div-wrapper {
+  /* position: absolute;
+  top: 85%;
+  left: 50%;
+  transform: translate(-50%, -50%); */
+  text-align: center;
+}
+
+#Login .div-wrapper img {
+  left: 0;
+  bottom: 0;
+  width: calc(100% - 86%);
+}
+
+#Login .link {
+  border: none;
+  background-color: transparent;
+  color: cyan;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#Login .loading {
+  cursor: progress;
+}
+
+.eye {
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  width: min-content;
+  right: 20px;
+  background: transparent !important;
+  border: unset !important;
+  color: black !important;
+}
+
+#Login .modal-90w {
+  min-width: 80%;
+}

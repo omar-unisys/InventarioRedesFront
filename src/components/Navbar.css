@@ -1,0 +1,151 @@
+#menu .navbar {
+  background-color: #3366CC;
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+#menu .menu-bars {
+  margin-left: 1rem;
+  font-size: 2rem;
+  background: none;
+}
+
+#menu .nav-menu {
+  background-color: #3366CC;
+  width: 350px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: -100%;
+  transition: 850ms;
+  z-index: 1000;
+  box-shadow: 0px 5px 10px black;
+}
+
+#menu .nav-menu.active {
+  left: 0;
+  transition: 350ms;
+}
+
+#menu .nav-text {
+  justify-content: flex-start;
+  align-items: center;
+  list-style: none;
+  min-height: auto;
+}
+
+#menu .nav-text ul {
+  max-height: 0px;
+  overflow: hidden;
+  transition: max-height 0.25s ease-out;
+}
+
+#menu .nav-text ul li {
+  list-style: none;
+}
+
+#menu .nav-text:hover ul {
+  max-height: 1000px;
+  transition: max-height 0.6s ease-in;
+}
+
+#menu .nav-text a {
+  text-decoration: none;
+  color: #f5f5f5;
+  font-size: 18px;
+  width: 95%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 12px 6px;
+  border-radius: 4px;
+}
+
+#menu .nav-text a:hover {
+  background-color: #00aeef;
+}
+
+
+#menu .nav-text .menu-submenu {
+  text-decoration: none;
+  color: #f5f5f5;
+  font-size: 18px;
+  width: 95%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 12px 6px;
+  border-radius: 4px;
+}
+
+#menu .nav-text .menu-submenu:hover {
+  background-color: #00aeef;
+  cursor: default;
+}
+
+#menu .nav-menu-items {
+  width: 100%;
+  padding-left: 1rem;
+}
+
+#menu .menu-items {
+  /* overflow-y: auto; */
+  height: -moz-calc(100% - 60px);
+  height: -webkit-calc(100% - 60px);
+  height: calc(100% - 60px);
+}
+
+#menu .navbar-toggle {
+  background-color: #3366CC;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+#menu span {
+  margin-left: 16px;
+}
+
+/* SCROLL STYLE */
+
+/* width */
+/* ::-webkit-scrollbar {
+  width: 4px;
+} */
+
+/* Track */
+/* ::-webkit-scrollbar-track {
+  border-radius: 20px;
+} */
+ 
+/* Handle */
+/* ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+} */
+
+.user {
+  font-weight: 500;
+  font-size: 17px;
+  color: white;
+  justify-content: end;
+}
+
+.titulo {
+  font-weight: normal;
+  font-size: 20px;
+  padding-left: 40px;
+  color: white;
+}
+
+.header {
+  width: 96%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
