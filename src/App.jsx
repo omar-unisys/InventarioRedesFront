@@ -10,7 +10,7 @@ import Swal from 'sweetalert2'
 import { HomePage } from './pages/HomePage';
 import { AdminPage } from './pages/AdminPage';
 import { Login } from './components/Login';
-
+import { TableInventarioRedes } from  './components/TableInventarioRedes';  
 
 function App() {
   const resetTimer = useIdleTimer(() => {
@@ -65,6 +65,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage/>} />
           <Route path="/admin/aplicaciones" element={<AdminPage/>} />
+          <Route path="/inventario/inventarioRedes/" element={<TableInventarioRedes/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
       </AuthProvider>
