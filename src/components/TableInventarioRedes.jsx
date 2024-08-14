@@ -4,7 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
-import { ServicioInventario } from '../services/InventarioRedesApi';
+import { getAllRecords } from '../services/InventarioRedesApi';
 import 'primeicons/primeicons.css';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ export const TableInventarioRedes = () => {
 
 
     useEffect(() => {
-        ServicioInventario.getCustomersLarge().then((data) => setInventario(getCustomers(data)));
+        getAllRecords.getCustomersLarge().then((data) => setInventario(getCustomers(data)));
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const getCustomers = (data) => {

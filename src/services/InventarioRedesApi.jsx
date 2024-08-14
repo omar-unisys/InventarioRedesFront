@@ -35010,7 +35010,7 @@ const getInventarioRedesByID = async(url, idInventarioRed)=>{
     return Filtro;
 }   
 
-export const ServicioInventario = {
+export const getAllRecords = {
     getData() {
         return [
             {
