@@ -4,7 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
-import { getAllRecords } from '../services/InventarioRedesApi';
+import getAll  from '../services/InventarioRedesApi';
 import 'primeicons/primeicons.css';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +13,7 @@ import { Badge } from 'primereact/badge';
 
 export const TableInventarioRedes = () => {
     const [inventario, setInventario] = useState([]);
-    const [selectedCustomers, setSelectedCustomers] = useState([]);
+    const [SelectedData, setSelectedData] = useState([]);
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -30,19 +30,18 @@ export const TableInventarioRedes = () => {
 
 
     useEffect(() => {
-        getAllRecords.getCustomersLarge().then((data) => setInventario(getCustomers(data)));
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+        getAll.getAll().then((data) => setInventario(getDates(data)));
+    }, []); 
 
-    const getCustomers = (data) => {
+    const getDates = (data) => {
         return [...(data || [])].map((d) => {
-            d.date = new Date(d.date);
-
+            d.FechaSoporte = new Date(d.date);
             return d;
         });
     };
 
     const formatDate = (value) => {
-        return value.toLocaleDateString('en-US', {
+        return value.toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -102,7 +101,7 @@ export const TableInventarioRedes = () => {
         <div className="card">
             <DataTable value={inventario} paginator header={header} rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    rowsPerPageOptions={[10, 25, 50]} dataKey="id" selectionMode="checkbox" selection={selectedCustomers} onSelectionChange={(e) => setSelectedCustomers(e.value)}
+                    rowsPerPageOptions={[10, 25, 50]} dataKey="id" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
                     //onRowSelect={handleFormTask} 
                     filters={filters} filterDisplay="menu" globalFilterFields={['Marca', 'Modelo', 'NombreEquipo', 'DireccionIp', 'TipoRed','Pais',
                         'Sede','Edificio','Piso','Ubicación','TipoServicio','DetalleServicio','Administrable','FechaSoporte',
@@ -122,7 +121,7 @@ export const TableInventarioRedes = () => {
                 <Column field="TipoServicio" header="Tipo Servicio" style={{ minWidth: '7rem' }} />
                 <Column field="DetalleServicio" header="Detalle Servicio" style={{ minWidth: '7rem' }} />
                 <Column field="Administrable" header="Administrable" dataType="boolean" style={{ minWidth: '7rem' }} />
-                <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" dataType="date" style={{ minWidth: '7rem' }}/>
+                <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" dataType="date" style={{ minWidth: '7rem' }} body={dateBodyTemplate}/>
                 <Column field="SoporteDetalle" header="Detalle Soporte" style={{ minWidth: '7rem' }} />
                 <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem' }}/>
                 <Column field="GarantiaDetalle" header="Detalle Garantía" style={{ minWidth: '7rem' }} />
