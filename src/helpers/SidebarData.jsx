@@ -7,6 +7,9 @@ import * as HiIcons from "react-icons/hi";
 // import * as FiIcons from "react-icons/fi";
 import * as BsIcons from "react-icons/bs";
 // import * as FcIcons from "react-icons/fc";
+import { FaTable } from "react-icons/fa";
+import { FaFileWaveform } from "react-icons/fa6";
+
 
 export const SidebarData = [
   {
@@ -33,5 +36,18 @@ export const SidebarData = [
     path: '/',
     icon: <HiIcons.HiOutlineDocumentReport />,
     cName: 'nav-text'
+  },
+  {
+    title: 'Inventario',
+    path: '/',
+    icon: <RiIcons.RiAdminLine />,
+    cName: 'nav-text',
+    subNav: [
+      {
+        title: 'Inventario Redes',
+        path: '/inventario/inventarioRedes',
+        icon: <FaTable />
+      }
+    ]
   }
 ];
