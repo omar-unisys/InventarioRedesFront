@@ -4,7 +4,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
-import { CustomerService } from '../services/SabiApi';
 import { ServicioInventario } from '../services/InventarioRedesApi';
 import 'primeicons/primeicons.css';
 import Swal from 'sweetalert2';
