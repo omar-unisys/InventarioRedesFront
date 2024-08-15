@@ -35,7 +35,11 @@ export const TableInventarioRedes = () => {
 
     const getDates = (data) => {
         return [...(data || [])].map((d) => {
-            d.FechaSoporte = new Date(d.date);
+            d.FechaSoporte = new Date(d.FechaSoporte);
+            d.FechaGarantia = new Date(d.FechaGarantia);
+            d.FechaEoL = new Date(d.FechaEoL);
+            d.FechaIngreso = new Date(d.FechaIngreso);
+            d.FechaModificacion = new Date(d.FechaModificacion);
             return d;
         });
     };
@@ -74,8 +78,24 @@ export const TableInventarioRedes = () => {
         );
     };
 
-    const dateBodyTemplate = (rowData) => {
-        return formatDate(rowData.date);
+    const FechaSoporteBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaSoporte);
+    };
+
+    const FechaGarantiaBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaGarantia);
+    };
+
+    const FechaEoLBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaEoL);
+    };
+
+    const FechaIngresoBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaIngreso);
+    };
+    
+    const FechaModificacionBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaModificacion);
     };
 
     const handleFormTask = (event) => {
@@ -101,7 +121,7 @@ export const TableInventarioRedes = () => {
         <div className="card">
             <DataTable value={inventario} paginator header={header} rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    rowsPerPageOptions={[10, 25, 50]} dataKey="id" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
+                    rowsPerPageOptions={[10, 25, 50]} dataKey="idSerial" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
                     //onRowSelect={handleFormTask} 
                     filters={filters} filterDisplay="menu" globalFilterFields={['Marca', 'Modelo', 'NombreEquipo', 'DireccionIp', 'TipoRed','Pais',
                         'Sede','Edificio','Piso','Ubicación','TipoServicio','DetalleServicio','Administrable','FechaSoporte',
@@ -121,16 +141,16 @@ export const TableInventarioRedes = () => {
                 <Column field="TipoServicio" header="Tipo Servicio" style={{ minWidth: '7rem' }} />
                 <Column field="DetalleServicio" header="Detalle Servicio" style={{ minWidth: '7rem' }} />
                 <Column field="Administrable" header="Administrable" dataType="boolean" style={{ minWidth: '7rem' }} />
-                <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" dataType="date" style={{ minWidth: '7rem' }} body={dateBodyTemplate}/>
+                <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" dataType="date" style={{ minWidth: '7rem' }} body={FechaSoporteBodyTemplate}/>
                 <Column field="SoporteDetalle" header="Detalle Soporte" style={{ minWidth: '7rem' }} />
-                <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem' }}/>
+                <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem' }} body={FechaGarantiaBodyTemplate}/>
                 <Column field="GarantiaDetalle" header="Detalle Garantía" style={{ minWidth: '7rem' }} />
-                <Column field="FechaEoL" header="Fecha EoL" sortable filterField="FechaEoL" dataType="date" style={{ minWidth: '7rem' }} />
+                <Column field="FechaEoL" header="Fecha EoL" sortable filterField="FechaEoL" dataType="date" style={{ minWidth: '7rem' }} body={FechaEoLBodyTemplate}/>
                 <Column field="EolDetalle" header="Detalle EoL" style={{ minWidth: '7rem' }} />
                 <Column field="VrsFirmware" header="Versión Firmware" style={{ minWidth: '7rem' }} />
                 <Column field="NumPuertos" header="Versión de Firmware" style={{ minWidth: '7rem' }} />
-                <Column field="FechaIngreso" header="Fecha de Ingreso" sortable filterField="FechaIngreso" dataType="date" style={{ minWidth: '7rem' }} />
-                <Column field="FechaModificacion" header="Fecha de Modificación" sortable filterField="FechaModificacion" dataType="date" style={{ minWidth: '7rem' }}/>
+                <Column field="FechaIngreso" header="Fecha de Ingreso" sortable filterField="FechaIngreso" dataType="date" style={{ minWidth: '7rem' }} body={FechaIngresoBodyTemplate}/>
+                <Column field="FechaModificacion" header="Fecha de Modificación" sortable filterField="FechaModificacion" dataType="date" style={{ minWidth: '7rem' }} body={FechaModificacionBodyTemplate}/>
                 <Column field="Comentario" header="Comentario" style={{ minWidth: '7rem' }} />
                 <Column field="Conectado" header="Conectado" dataType="boolean" style={{ minWidth: '7rem' }} />
                 <Column field="InStock" header="En Stock" dataType="boolean" style={{ minWidth: '7rem' }} />

@@ -35011,9 +35011,11 @@ const getInventarioRedesByID = async(url, idInventarioRed)=>{
 }   
 
 const getAll = async()=> {
-    const url = `${import.meta.env.VITE_URL_SERVICES}/invred/`;
+    const url = `${import.meta.env.VITE_URL_SERVICES}invred/`;
+    console.log(url);
     const res = await fetch(url);
     const data = await res.json();
+    console.log(data);
     return data;
 };
 
