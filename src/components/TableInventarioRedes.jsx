@@ -1,38 +1,96 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { InputText } from 'primereact/inputtext';
-import { IconField } from 'primereact/iconfield';
-import getAll  from '../services/InventarioRedesApi';
+import InventarioRedesApi from '../services/InventarioRedesApi';
+import { Toast } from 'primereact/toast';
 import 'primeicons/primeicons.css';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from 'primereact/badge';
+import { Dropdown } from 'primereact/dropdown';
+import { Tag } from 'primereact/tag';
+import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
 
 
 export const TableInventarioRedes = () => {
     const [inventario, setInventario] = useState([]);
-    const [SelectedData, setSelectedData] = useState([]);
+    const [SelectedData, setSelectedData] = useState(null);
     const navigate = useNavigate();
-    const [filters, setFilters] = useState({
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        'country.name': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        representative: { value: null, matchMode: FilterMatchMode.IN },
-        date: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-        balance: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        status: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        activity: { value: null, matchMode: FilterMatchMode.BETWEEN }
-    });
-    const [globalFilterValue, setGlobalFilterValue] = useState('');
+    const [filters, setFilters] = useState(null);
     
+    
+    const toast = useRef(null);
 
+    //Agregado
+    const [EnStock] = useState(['No', 'Si']);
+
+    const enStockRowFilterTemplate = (options) => {
+
+        return (
+            <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={enStockItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
+        );
+
+    };
+
+    const conectadoRowFilterTemplate = (options) => {
+
+        return (
+            <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={conectadoItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
+        );
+
+    };
+    const administrableRowFilterTemplate = (options) => {
+
+        return (
+            <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={administrableItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
+        );
+
+    };
+    const administrableItemTemplate = (option) => {
+        return <Tag value={option} severity={getSeverity(option)} />;
+    };
+
+
+    const conectadoItemTemplate = (option) => {
+        return <Tag value={option} severity={getSeverity(option)} />;
+    };
+
+    const enStockItemTemplate = (option) => {
+        return <Tag value={option} severity={getSeverity(option)} />;
+
+
+    };
+
+    const getSeverity = (InStock) => {
+        switch (InStock) {
+            case 'No':
+                return 'danger';
+
+            case 'Si':
+                return 'success';
+        }
+    };
+
+    const enStockBodyTemplate = (rowData) => {
+        return <Tag value={rowData.InStock} severity={getSeverity(rowData.InStock)} />;
+    };
+
+    const conectadoBodyTemplate = (rowData) => {
+        return <Tag value={rowData.Conectado} severity={getSeverity(rowData.Conectado)} />;
+    };
+
+    const administrableBodyTemplate = (rowData) => {
+        return <Tag value={rowData.Administrable} severity={getSeverity(rowData.Administrable)} />;
+    };
 
     useEffect(() => {
-        getAll.getAll().then((data) => setInventario(getDates(data)));
-    }, []); 
+        InventarioRedesApi.getAll().then((data) => setInventario(getDates(data)));
+        initFilters();
+    }, []);
 
+    //Se obtienen los datos recibidos de la base de datos y se dan formato a las Fechas y Booleanos
     const getDates = (data) => {
         return [...(data || [])].map((d) => {
             d.FechaSoporte = new Date(d.FechaSoporte);
@@ -40,10 +98,24 @@ export const TableInventarioRedes = () => {
             d.FechaEoL = new Date(d.FechaEoL);
             d.FechaIngreso = new Date(d.FechaIngreso);
             d.FechaModificacion = new Date(d.FechaModificacion);
+            if (d.InStock == 1)
+                d.InStock = "Si"
+            else
+                d.InStock = "No"
+
+            if (d.Conectado == 1)
+                d.Conectado = "Si"
+            else
+                d.Conectado = "No"
+            if (d.Administrable == 1)
+                d.Administrable = "Si"
+            else
+                d.Administrable = "No"
             return d;
         });
     };
 
+    //Formato de fecha 
     const formatDate = (value) => {
         return value.toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -52,32 +124,89 @@ export const TableInventarioRedes = () => {
         });
     };
 
-    const fechasBodyTemplate = (rowData) => {
-        return <>
-            <Badge value={rowData.startTime} severity="info"></Badge> {'> '}
-            <Badge value={rowData.endTime} severity="info"></Badge>
-            </>;
+
+
+    //Se crea el archivo de excel con columnas y filas
+    const exportExcel = () => {
+        import('xlsx').then((xlsx) => {
+            const worksheet = xlsx.utils.json_to_sheet(inventario);
+            const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
+            const excelBuffer = xlsx.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array'
+            });
+            saveAsExcelFile(excelBuffer, 'inventario');
+        });
     };
 
-    const onGlobalFilterChange = (e) => {
-        const value = e.target.value;
-        let _filters = { ...filters };
-
-        _filters['global'].value = value;
-
-        setFilters(_filters);
-        setGlobalFilterValue(value);
+    //Se da nombre y formato xlsx al archivo creado
+    const saveAsExcelFile = (buffer, fileName) => {
+        import('file-saver').then((module) => {
+            if (module && module.default) {
+                let EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+                let EXCEL_EXTENSION = '.xlsx';
+                const data = new Blob([buffer], {
+                    type: EXCEL_TYPE
+                });
+                module.default.saveAs(data, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
+            }
+        });
     };
 
+    //Se quitan los filtos de la tabla
+    const clearFilter = () => {
+        initFilters();
+    };
+    
+    //Se definen las opciones de los filtros en cada columna
+    const initFilters = () => {
+        setFilters({
+            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH},
+            idCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH  },
+            idTipoEquipo: { value: null,  matchMode: FilterMatchMode.STARTS_WITH},
+            idPropietarioFilial: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            idFilialPago: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Marca: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Modelo: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            NombreEquipo: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            DireccionIp: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            TipoRed: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Pais: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Sede: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Edificio: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Piso: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            Ubicacion: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            TipoServicio: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            DetalleServicio: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            
+            idCriticidad: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+            representative: { value: null, matchMode: FilterMatchMode.IN },
+            date: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+            balance: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+            status: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+            activity: { value: null, matchMode: FilterMatchMode.BETWEEN },
+            verified: { value: null, matchMode: FilterMatchMode.EQUALS }
+        });
+        
+    };
+
+
+    //Botnones de Control del Inventario en la Cabecera
     const renderHeader = () => {
         return (
-            <div>
-                <h4 className="m-0 !important">Inventario de Redes</h4>
-                <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Buscar" />
+            <div className="gap-2 align-items-center justify-content-between buttonStyles" >
+                <Button label="Quitar Filtros" icon="pi pi-filter-slash"  rounded outlined onClick={clearFilter} className='clearFilterStyle'/>
+
+                <Button label="Exportar" icon="pi pi-file-excel" rounded onClick={exportExcel} data-pr-tooltip="XLS" className="btn btn-success" />
+                <label htmlFor="string">&nbsp;&nbsp;</label>
+                <Button label="Reemplazar" icon="pi pi-sync" className="btn btn-warning" onClick={handleFormReemplazar} disabled={!SelectedData} />
+                <label htmlFor="string">&nbsp;&nbsp;</label>
+                <Button label="Modificar" icon="pi pi-file-edit" className="btn btn-primary" onClick={handleFormTask} disabled={!SelectedData} />
             </div>
         );
     };
-
+    
     const FechaSoporteBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaSoporte);
     };
@@ -93,68 +222,118 @@ export const TableInventarioRedes = () => {
     const FechaIngresoBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaIngreso);
     };
-    
+
     const FechaModificacionBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaModificacion);
     };
 
-    const handleFormTask = (event) => {
+    const handleFormTask = () => {
+        console.log(SelectedData);
         Swal.fire({
             title: "",
-            text: `¿Quieres gestionar la actividad del cambio ${event.data.numberChange}?`,
+            text: `¿Quiere editar la información del inventario con Serial ${SelectedData.idSerial}?`,
             icon: "question",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
             cancelButtonText: "No",
             confirmButtonText: "Si"
-            }).then((result) => {
+        }).then((result) => {
             if (result.isConfirmed) {
-                navigate("/sabi/timerecord/"+event.data.id, { replace: true });
+                navigate("/inventario/updateInventarioForm/" + SelectedData.idSerial, { replace: true });
             }
         });
     };
 
+    const handleFormReemplazar = () => {
+        console.log(SelectedData);
+        if (SelectedData.InStock == 0) {
+            Swal.fire({
+                title: "",
+                text: `¿Quiere reemplazar el elemento del inventario con Serial ${SelectedData.idSerial}?`,
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                cancelButtonText: "No",
+                confirmButtonText: "Si"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/inventario/ReemplazarInventarioForm/" + SelectedData.idSerial, { replace: true });
+                }
+            });
+        } else {
+            Swal.fire({
+                title: "",
+                text: `El elemento del inventario con Serial ${SelectedData.idSerial}, se encuentra en Stock. Por favor validar`,
+                icon: "error",
+
+
+            }).then((result) => {
+
+            });
+        }
+
+    };
+
+    const dateFilterTemplate = (options) => {
+        console.log(options.value);
+
+        return <Calendar value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" mask="99/99/9999" />;
+    };
+
+    
+
+
     const header = renderHeader();
 
     return (
-        <div className="card">
-            <DataTable value={inventario} paginator header={header} rows={10}
+        <div>
+            <Toast ref={toast} />
+            <div className="card">
+                <h4 style={{ textAlign: "center", padding: "10px" }}> Inventario de Redes</h4>
+                <DataTable value={inventario} paginator header={header} rows={10}
+
+
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]} dataKey="idSerial" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
                     //onRowSelect={handleFormTask} 
-                    filters={filters} filterDisplay="menu" globalFilterFields={['Marca', 'Modelo', 'NombreEquipo', 'DireccionIp', 'TipoRed','Pais',
-                        'Sede','Edificio','Piso','Ubicación','TipoServicio','DetalleServicio','Administrable','FechaSoporte',
-                        'SoporteDetalle','FechaGarantia','GarantiaDetalle','FechaEoL','EolDetalle','VrsFirmware','NumPuertos',
-                        'FechaIngreso','FechaModificacion','Comentario','Conectado','InStock']}
-                    emptyMessage="No se encontró ningún registro" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" size='small'>
-                <Column field="Marca" header="Marca"  style={{ minWidth: '5rem' }} />
-                <Column field="Modelo" header="Modelo"  style={{ minWidth: '5rem' }} />
-                <Column field="NombreEquipo" header="Nombre Equipo"  style={{ minWidth: '5rem' }} />
-                <Column field="DireccionIp" header="Direccion Ip" style={{ minWidth: '7rem' }} />
-                <Column field="TipoRed" header="Tipo de Red"  style={{ minWidth: '7rem' }} />
-                <Column field="Pais" header="País"  style={{ minWidth: '7rem' }} />
-                <Column field="Sede" header="Sede" style={{ minWidth: '7rem' }} />
-                <Column field="Edificio" header="Edificio" style={{ minWidth: '7rem' }} />
-                <Column field="Piso" header="Piso" style={{ minWidth: '4rem' }} />
-                <Column field="Ubicación" header="Ubicación" style={{ minWidth: '7rem' }} />
-                <Column field="TipoServicio" header="Tipo Servicio" style={{ minWidth: '7rem' }} />
-                <Column field="DetalleServicio" header="Detalle Servicio" style={{ minWidth: '7rem' }} />
-                <Column field="Administrable" header="Administrable" dataType="boolean" style={{ minWidth: '7rem' }} />
-                <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" dataType="date" style={{ minWidth: '7rem' }} body={FechaSoporteBodyTemplate}/>
-                <Column field="SoporteDetalle" header="Detalle Soporte" style={{ minWidth: '7rem' }} />
-                <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem' }} body={FechaGarantiaBodyTemplate}/>
-                <Column field="GarantiaDetalle" header="Detalle Garantía" style={{ minWidth: '7rem' }} />
-                <Column field="FechaEoL" header="Fecha EoL" sortable filterField="FechaEoL" dataType="date" style={{ minWidth: '7rem' }} body={FechaEoLBodyTemplate}/>
-                <Column field="EolDetalle" header="Detalle EoL" style={{ minWidth: '7rem' }} />
-                <Column field="VrsFirmware" header="Versión Firmware" style={{ minWidth: '7rem' }} />
-                <Column field="NumPuertos" header="Versión de Firmware" style={{ minWidth: '7rem' }} />
-                <Column field="FechaIngreso" header="Fecha de Ingreso" sortable filterField="FechaIngreso" dataType="date" style={{ minWidth: '7rem' }} body={FechaIngresoBodyTemplate}/>
-                <Column field="FechaModificacion" header="Fecha de Modificación" sortable filterField="FechaModificacion" dataType="date" style={{ minWidth: '7rem' }} body={FechaModificacionBodyTemplate}/>
-                <Column field="Comentario" header="Comentario" style={{ minWidth: '7rem' }} />
-                <Column field="Conectado" header="Conectado" dataType="boolean" style={{ minWidth: '7rem' }} />
-                <Column field="InStock" header="En Stock" dataType="boolean" style={{ minWidth: '7rem' }} />
-            </DataTable>
+                    filters={filters} 
+                    emptyMessage="No se encontró ningún registro" currentPageReportTemplate="Viendo {first} a {last} de {totalRecords} registros " size="small"
+                    onFilter={(e) => setFilters(e.filters)}
+                    scrollable scrollHeight="600px" style={{ minWidth: '50rem' }}>
+
+                    <Column selectionMode="single" exportable={false} />
+                    <Column field="idSerial" header="Serial" filter filterPlaceholder="Serial" style={{ minWidth: '12rem' }} />
+                    <Column field="Marca" header="Marca" style={{ minWidth: '10rem', textAlign: "left" }} filter filterPlaceholder="Marca" />
+                    <Column field="Modelo" header="Modelo" style={{ minWidth: '10rem', textAlign: "left" }} filter filterPlaceholder="Modelo" />
+                    <Column field="NombreEquipo" header="Nombre Equipo" style={{ minWidth: '12rem', textAlign: "left" }}  filter filterPlaceholder="Nombre Equipo" />
+                    <Column field="DireccionIp" header="Direccion Ip" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Dirección IP" />
+                    <Column field="InStock" header="En Stock"  filterMenuStyle={{ width: '1rem' }} style={{ minWidth: '1rem', textAlign: "left" }} body={enStockBodyTemplate} filter filterElement={enStockRowFilterTemplate} />
+                    <Column field="TipoRed" header="Tipo de Red" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Tipo de Red" />
+                    <Column field="Pais" header="País" style={{ minWidth: '1rem', textAlign: "left" }} />
+                    <Column field="Sede" header="Sede" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Sede" />
+                    <Column field="Edificio" header="Edificio" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Edificio" />
+                    <Column field="Piso" header="Piso" style={{ minWidth: '4rem', textAlign: "left" }}  filter filterPlaceholder="Piso" />
+                    <Column field="Ubicacion" header="Ubicación" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Ubicacion" />
+                    <Column field="TipoServicio" header="Tipo Servicio" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="DetalleServicio" header="Detalle Servicio" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="Administrable" header="Administrable" dataType="boolean" style={{ minWidth: '7rem', textAlign: "left" }} body={administrableBodyTemplate} filter filterElement={administrableRowFilterTemplate} />
+                    <Column field="FechaSoporte" header="Fecha Soporte" sortable  filterField="FechaSoporte" filter filterElement={dateFilterTemplate} dataType="date" style={{ minWidth: '10rem', textAlign: "left" }} body={FechaSoporteBodyTemplate} />
+                    <Column field="SoporteDetalle" header="Detalle Soporte" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaGarantiaBodyTemplate} />
+                    <Column field="GarantiaDetalle" header="Detalle Garantía" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="FechaEoL" header="Fecha EoL" sortable filterField="FechaEoL" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaEoLBodyTemplate} />
+                    <Column field="EolDetalle" header="Detalle EoL" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="VrsFirmware" header="Versión Firmware" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Versión Firmware" />
+                    <Column field="NumPuertos" header="Número de Puertos" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="FechaIngreso" header="Fecha de Ingreso" sortable filterField="FechaIngreso" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaIngresoBodyTemplate} />
+                    <Column field="FechaModificacion" header="Fecha de Modificación" sortable filterField="FechaModificacion" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaModificacionBodyTemplate} />
+                    <Column field="Comentario" header="Comentario" style={{ minWidth: '7rem', textAlign: "left" }} />
+                    <Column field="Conectado" header="Conectado"  filterMenuStyle={{ width: '7rem' }} style={{ minWidth: '10rem', textAlign: "left" }} body={conectadoBodyTemplate} filter filterElement={conectadoRowFilterTemplate} />
+
+                </DataTable>
+            </div>
         </div>
     );
 }
