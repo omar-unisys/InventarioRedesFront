@@ -126,7 +126,7 @@ export const RegistroInventarioForm = () => {
         <>
 
             <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                <h4>{title}</h4>
+                <h4 className='titleCenter'>{title}</h4>
 
 
                 <Container>

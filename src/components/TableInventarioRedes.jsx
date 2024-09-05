@@ -19,50 +19,47 @@ export const TableInventarioRedes = () => {
     const [SelectedData, setSelectedData] = useState(null);
     const navigate = useNavigate();
     const [filters, setFilters] = useState(null);
-    
-    
+
+
     const toast = useRef(null);
 
-    //Agregado
+    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
     const [EnStock] = useState(['No', 'Si']);
 
     const enStockRowFilterTemplate = (options) => {
-
         return (
             <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={enStockItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
         );
-
     };
 
     const conectadoRowFilterTemplate = (options) => {
-
         return (
             <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={conectadoItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
         );
-
     };
-    const administrableRowFilterTemplate = (options) => {
 
+    const administrableRowFilterTemplate = (options) => {
         return (
             <Dropdown value={options.value} options={EnStock} onChange={(e) => options.filterApplyCallback(e.value)} itemTemplate={administrableItemTemplate} placeholder="Seleccione una opción" className="p-column-filter" showClear style={{ minWidth: '12rem' }} />
         );
-
     };
+
+    //Determinar el color de las opciones Si o No de Administrable
     const administrableItemTemplate = (option) => {
         return <Tag value={option} severity={getSeverity(option)} />;
     };
 
-
+    //Determinar el color de las opciones Si o No de Conectado
     const conectadoItemTemplate = (option) => {
         return <Tag value={option} severity={getSeverity(option)} />;
     };
-
+    
+    //Determinar el color de las opciones (Del filtro) Si o No de InStock
     const enStockItemTemplate = (option) => {
         return <Tag value={option} severity={getSeverity(option)} />;
-
-
     };
 
+    //Retorna el color que se le va a gregar a las opciones. Reutilizado para Stok, Administrable y Conectado
     const getSeverity = (InStock) => {
         switch (InStock) {
             case 'No':
@@ -72,19 +69,22 @@ export const TableInventarioRedes = () => {
                 return 'success';
         }
     };
-
+    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de InStock
     const enStockBodyTemplate = (rowData) => {
         return <Tag value={rowData.InStock} severity={getSeverity(rowData.InStock)} />;
     };
 
+    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Conectado
     const conectadoBodyTemplate = (rowData) => {
         return <Tag value={rowData.Conectado} severity={getSeverity(rowData.Conectado)} />;
     };
 
+    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Administrable
     const administrableBodyTemplate = (rowData) => {
         return <Tag value={rowData.Administrable} severity={getSeverity(rowData.Administrable)} />;
     };
 
+    //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
         InventarioRedesApi.getAll().then((data) => setInventario(getDates(data)));
         initFilters();
@@ -124,8 +124,6 @@ export const TableInventarioRedes = () => {
         });
     };
 
-
-
     //Se crea el archivo de excel con columnas y filas
     const exportExcel = () => {
         import('xlsx').then((xlsx) => {
@@ -157,14 +155,19 @@ export const TableInventarioRedes = () => {
     const clearFilter = () => {
         initFilters();
     };
-    
+
+    //Redirecciona al formulario de creacion de nuevo elemento en el inventario
+    const RedirectCreateNewForm = () => {
+        navigate("/inventario/RegistroInventarioForm/", { replace: true });
+    }
+
     //Se definen las opciones de los filtros en cada columna
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH},
-            idCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH  },
-            idTipoEquipo: { value: null,  matchMode: FilterMatchMode.STARTS_WITH},
+            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idTipoEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             idPropietarioFilial: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
             idFilialPago: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
             Marca: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
@@ -179,7 +182,7 @@ export const TableInventarioRedes = () => {
             Ubicacion: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
             TipoServicio: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
             DetalleServicio: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            
+
             idCriticidad: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
             representative: { value: null, matchMode: FilterMatchMode.IN },
             date: { value: null, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
@@ -188,17 +191,18 @@ export const TableInventarioRedes = () => {
             activity: { value: null, matchMode: FilterMatchMode.BETWEEN },
             verified: { value: null, matchMode: FilterMatchMode.EQUALS }
         });
-        
-    };
 
+    };
 
     //Botnones de Control del Inventario en la Cabecera
     const renderHeader = () => {
         return (
             <div className="gap-2 align-items-center justify-content-between buttonStyles" >
-                <Button label="Quitar Filtros" icon="pi pi-filter-slash"  rounded outlined onClick={clearFilter} className='clearFilterStyle'/>
+                <Button label="Quitar Filtros" icon="pi pi-filter-slash" rounded outlined onClick={clearFilter} className='clearFilterStyle' />
 
                 <Button label="Exportar" icon="pi pi-file-excel" rounded onClick={exportExcel} data-pr-tooltip="XLS" className="btn btn-success" />
+                <label htmlFor="string">&nbsp;&nbsp;</label>
+                <Button label="Nuevo" icon="pi pi-file-plus" rounded outlined onClick={RedirectCreateNewForm} className='btn btn-primary' />
                 <label htmlFor="string">&nbsp;&nbsp;</label>
                 <Button label="Reemplazar" icon="pi pi-sync" className="btn btn-warning" onClick={handleFormReemplazar} disabled={!SelectedData} />
                 <label htmlFor="string">&nbsp;&nbsp;</label>
@@ -206,27 +210,33 @@ export const TableInventarioRedes = () => {
             </div>
         );
     };
-    
+
+    //Template que devuelve la FechaSoporte con formato 
     const FechaSoporteBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaSoporte);
     };
 
+    //Template que devuelve la FechaGarantia con formato 
     const FechaGarantiaBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaGarantia);
     };
 
+    //Template que devuelve la FechaEoL con formato 
     const FechaEoLBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaEoL);
     };
 
+    //Template que devuelve la FechaIngreso con formato 
     const FechaIngresoBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaIngreso);
     };
 
+    //Template que devuelve la FechaModificación con formato 
     const FechaModificacionBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaModificacion);
     };
 
+    //Ventana emergente de alerta confirmacion para editar la informacion de algun registro de la tabla 
     const handleFormTask = () => {
         console.log(SelectedData);
         Swal.fire({
@@ -245,9 +255,10 @@ export const TableInventarioRedes = () => {
         });
     };
 
+    //Ventana emergente de alerta confirmacion para Reemplazar un equipo de la tabla 
     const handleFormReemplazar = () => {
         console.log(SelectedData);
-        if (SelectedData.InStock == 0) {
+        if (SelectedData.InStock == "No") {
             Swal.fire({
                 title: "",
                 text: `¿Quiere reemplazar el elemento del inventario con Serial ${SelectedData.idSerial}?`,
@@ -267,8 +278,6 @@ export const TableInventarioRedes = () => {
                 title: "",
                 text: `El elemento del inventario con Serial ${SelectedData.idSerial}, se encuentra en Stock. Por favor validar`,
                 icon: "error",
-
-
             }).then((result) => {
 
             });
@@ -276,13 +285,12 @@ export const TableInventarioRedes = () => {
 
     };
 
+    //Filtro de fechas
     const dateFilterTemplate = (options) => {
         console.log(options.value);
-
         return <Calendar value={options.value} onChange={(e) => options.filterApplyCallback(e.value)} dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" mask="99/99/9999" />;
     };
 
-    
 
 
     const header = renderHeader();
@@ -291,14 +299,13 @@ export const TableInventarioRedes = () => {
         <div>
             <Toast ref={toast} />
             <div className="card">
-                <h4 style={{ textAlign: "center", padding: "10px" }}> Inventario de Redes</h4>
+                <h4 className='titleCenter'> Inventario de Redes</h4>
                 <DataTable value={inventario} paginator header={header} rows={10}
-
 
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]} dataKey="idSerial" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
                     //onRowSelect={handleFormTask} 
-                    filters={filters} 
+                    filters={filters}
                     emptyMessage="No se encontró ningún registro" currentPageReportTemplate="Viendo {first} a {last} de {totalRecords} registros " size="small"
                     onFilter={(e) => setFilters(e.filters)}
                     scrollable scrollHeight="600px" style={{ minWidth: '50rem' }}>
@@ -307,30 +314,30 @@ export const TableInventarioRedes = () => {
                     <Column field="idSerial" header="Serial" filter filterPlaceholder="Serial" style={{ minWidth: '12rem' }} />
                     <Column field="Marca" header="Marca" style={{ minWidth: '10rem', textAlign: "left" }} filter filterPlaceholder="Marca" />
                     <Column field="Modelo" header="Modelo" style={{ minWidth: '10rem', textAlign: "left" }} filter filterPlaceholder="Modelo" />
-                    <Column field="NombreEquipo" header="Nombre Equipo" style={{ minWidth: '12rem', textAlign: "left" }}  filter filterPlaceholder="Nombre Equipo" />
-                    <Column field="DireccionIp" header="Direccion Ip" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Dirección IP" />
-                    <Column field="InStock" header="En Stock"  filterMenuStyle={{ width: '1rem' }} style={{ minWidth: '1rem', textAlign: "left" }} body={enStockBodyTemplate} filter filterElement={enStockRowFilterTemplate} />
-                    <Column field="TipoRed" header="Tipo de Red" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Tipo de Red" />
+                    <Column field="NombreEquipo" header="Nombre Equipo" style={{ minWidth: '12rem', textAlign: "left" }} filter filterPlaceholder="Nombre Equipo" />
+                    <Column field="DireccionIp" header="Direccion Ip" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Dirección IP" />
+                    <Column field="InStock" header="En Stock" filterMenuStyle={{ width: '1rem' }} style={{ minWidth: '1rem', textAlign: "left" }} body={enStockBodyTemplate} filter filterElement={enStockRowFilterTemplate} />
+                    <Column field="TipoRed" header="Tipo de Red" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Tipo de Red" />
                     <Column field="Pais" header="País" style={{ minWidth: '1rem', textAlign: "left" }} />
-                    <Column field="Sede" header="Sede" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Sede" />
-                    <Column field="Edificio" header="Edificio" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Edificio" />
-                    <Column field="Piso" header="Piso" style={{ minWidth: '4rem', textAlign: "left" }}  filter filterPlaceholder="Piso" />
-                    <Column field="Ubicacion" header="Ubicación" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Ubicacion" />
+                    <Column field="Sede" header="Sede" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Sede" />
+                    <Column field="Edificio" header="Edificio" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Edificio" />
+                    <Column field="Piso" header="Piso" style={{ minWidth: '4rem', textAlign: "left" }} filter filterPlaceholder="Piso" />
+                    <Column field="Ubicacion" header="Ubicación" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Ubicacion" />
                     <Column field="TipoServicio" header="Tipo Servicio" style={{ minWidth: '7rem', textAlign: "left" }} />
                     <Column field="DetalleServicio" header="Detalle Servicio" style={{ minWidth: '7rem', textAlign: "left" }} />
                     <Column field="Administrable" header="Administrable" dataType="boolean" style={{ minWidth: '7rem', textAlign: "left" }} body={administrableBodyTemplate} filter filterElement={administrableRowFilterTemplate} />
-                    <Column field="FechaSoporte" header="Fecha Soporte" sortable  filterField="FechaSoporte" filter filterElement={dateFilterTemplate} dataType="date" style={{ minWidth: '10rem', textAlign: "left" }} body={FechaSoporteBodyTemplate} />
+                    <Column field="FechaSoporte" header="Fecha Soporte" sortable filterField="FechaSoporte" filter filterElement={dateFilterTemplate} dataType="date" style={{ minWidth: '10rem', textAlign: "left" }} body={FechaSoporteBodyTemplate} />
                     <Column field="SoporteDetalle" header="Detalle Soporte" style={{ minWidth: '7rem', textAlign: "left" }} />
                     <Column field="FechaGarantia" header="Fecha Gatantía" sortable filterField="FechaGarantia" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaGarantiaBodyTemplate} />
                     <Column field="GarantiaDetalle" header="Detalle Garantía" style={{ minWidth: '7rem', textAlign: "left" }} />
                     <Column field="FechaEoL" header="Fecha EoL" sortable filterField="FechaEoL" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaEoLBodyTemplate} />
                     <Column field="EolDetalle" header="Detalle EoL" style={{ minWidth: '7rem', textAlign: "left" }} />
-                    <Column field="VrsFirmware" header="Versión Firmware" style={{ minWidth: '7rem', textAlign: "left" }}  filter filterPlaceholder="Versión Firmware" />
+                    <Column field="VrsFirmware" header="Versión Firmware" style={{ minWidth: '7rem', textAlign: "left" }} filter filterPlaceholder="Versión Firmware" />
                     <Column field="NumPuertos" header="Número de Puertos" style={{ minWidth: '7rem', textAlign: "left" }} />
                     <Column field="FechaIngreso" header="Fecha de Ingreso" sortable filterField="FechaIngreso" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaIngresoBodyTemplate} />
                     <Column field="FechaModificacion" header="Fecha de Modificación" sortable filterField="FechaModificacion" dataType="date" style={{ minWidth: '7rem', textAlign: "left" }} body={FechaModificacionBodyTemplate} />
                     <Column field="Comentario" header="Comentario" style={{ minWidth: '7rem', textAlign: "left" }} />
-                    <Column field="Conectado" header="Conectado"  filterMenuStyle={{ width: '7rem' }} style={{ minWidth: '10rem', textAlign: "left" }} body={conectadoBodyTemplate} filter filterElement={conectadoRowFilterTemplate} />
+                    <Column field="Conectado" header="Conectado" filterMenuStyle={{ width: '7rem' }} style={{ minWidth: '10rem', textAlign: "left" }} body={conectadoBodyTemplate} filter filterElement={conectadoRowFilterTemplate} />
 
                 </DataTable>
             </div>

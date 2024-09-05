@@ -53,7 +53,7 @@ export const UpdateInventarioForm = () => {
         Conectado: false,
         InStock: false,
         idModified: false,
-        idSerialAnterior:""
+        idSerialAnterior: ""
     });
 
     const [validated, setValidated] = useState(false);
@@ -136,7 +136,7 @@ export const UpdateInventarioForm = () => {
             if (responseData.length > 0) {
 
                 setInventario(responseData[0]);
-                
+
                 console.log(responseData[0]);
 
                 responseData[0].FechaSoporte = formatDate(new Date(responseData[0].FechaSoporte));
@@ -170,12 +170,14 @@ export const UpdateInventarioForm = () => {
         });
     }
 
+    
+
     return (
         <>
-
+            
             <Form noValidate validated={validated} onSubmit={handleSubmit}>
                 <h4 className='titleCenter'>{title}</h4>
-
+                
 
                 <Container>
                     <Accordion defaultActiveKey={['0', '1', '2', '3']} alwaysOpen>
@@ -189,7 +191,7 @@ export const UpdateInventarioForm = () => {
                                                 name='idSerial'
                                                 defaultValue={""}
                                                 value={inventario.idSerial}
-                                                onChange={e => setInventario({ ...inventario, idSerial: e.target.value, idModified:true, idSerialAnterior:inventario.idSerial})}
+                                                onChange={e => setInventario({ ...inventario, idSerial: e.target.value, idModified: true, idSerialAnterior: inventario.idSerial })}
                                                 required
                                             />
                                             <Form.Control.Feedback type="invalid">
@@ -310,7 +312,7 @@ export const UpdateInventarioForm = () => {
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
                                                 onChange={e => setInventario({ ...inventario, InStock: e.checked })}
-                                                checked={inventario.InStock || false}>    
+                                                checked={inventario.InStock || false}>
                                             </Checkbox>
                                             <label htmlFor="chInStock" className="ml-2">En Stock</label>
                                         </div>
@@ -667,7 +669,7 @@ export const UpdateInventarioForm = () => {
                                                     day: '2-digit'
                                                 })}
                                                 onChange={e => setInventario({ ...inventario, FechaModificacion: e.target.value })}
-                                            disabled ={true}
+                                                disabled={true}
                                             />
                                         </FloatingLabel>
                                     </Col>

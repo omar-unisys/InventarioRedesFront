@@ -64,7 +64,7 @@ export const ReemplazarInventarioForm = () => {
 
 
     const resetForm = () => {
-        setTitle("Registro de inventario");
+        setTitle("Reemplazo del serial "+ responseData[0].idSerial);
         setIsDisabled(false);
     }
 
@@ -164,12 +164,24 @@ export const ReemplazarInventarioForm = () => {
         });
     }
 
+//Botnones de Control del Inventario en la Cabecera
+const renderHeader = () => {
+    return (
+        <div className="gap-2 align-items-center justify-content-between titleCenter" >
+            Hola Esto es una prueb
+        </div>
+    );
+};
+
+const header = renderHeader();
+
     return (
         <>
 
             <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                <h4>{title}</h4>
+                <h4 className='titleCenter'>{title}</h4>
 
+                <h6>{header}</h6>
 
                 <Container>
                     <Accordion defaultActiveKey={['0', '1', '2', '3']} alwaysOpen>
