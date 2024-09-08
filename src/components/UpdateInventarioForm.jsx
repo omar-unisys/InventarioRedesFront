@@ -92,6 +92,7 @@ export const UpdateInventarioForm = () => {
     }
 
     const saveInventario = async () => {
+        
         await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventario).then(response => {
             console.log(response);
 
@@ -127,7 +128,6 @@ export const UpdateInventarioForm = () => {
                 year: 'numeric'
             });
         }
-
     };
 
 
@@ -180,7 +180,7 @@ export const UpdateInventarioForm = () => {
                 
 
                 <Container>
-                    <Accordion defaultActiveKey={['0', '1', '2', '3']} alwaysOpen>
+                    <Accordion defaultActiveKey={['0', '1', '2', '3','4']} alwaysOpen>
                         <Accordion.Item eventKey="0">
                             <Accordion.Header>Identificacion del equipo</Accordion.Header>
                             <Accordion.Body>
@@ -411,6 +411,7 @@ export const UpdateInventarioForm = () => {
                                 </Row>
                             </Accordion.Body>
                         </Accordion.Item>
+
                         <Accordion.Item eventKey="3">
                             <Accordion.Header>Ubicación y Sede</Accordion.Header>
                             <Accordion.Body>
@@ -557,7 +558,7 @@ export const UpdateInventarioForm = () => {
                             </Accordion.Body>
                         </Accordion.Item>
 
-                        <Accordion.Item eventKey="3">
+                        <Accordion.Item eventKey="4">
                             <Accordion.Header>Garantía y Fechas de Control</Accordion.Header>
                             <Accordion.Body>
                                 <Row>

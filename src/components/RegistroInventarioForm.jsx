@@ -130,7 +130,7 @@ export const RegistroInventarioForm = () => {
 
 
                 <Container>
-                    <Accordion defaultActiveKey={['0', '1', '2', '3']} alwaysOpen>
+                    <Accordion defaultActiveKey={['0', '1', '2', '3','4']} alwaysOpen>
                         <Accordion.Item eventKey="0">
                             <Accordion.Header>Identificacion del equipo</Accordion.Header>
                             <Accordion.Body>
@@ -361,6 +361,7 @@ export const RegistroInventarioForm = () => {
                                 </Row>
                             </Accordion.Body>
                         </Accordion.Item>
+                        
                         <Accordion.Item eventKey="3">
                             <Accordion.Header>Ubicación y Sede</Accordion.Header>
                             <Accordion.Body>
@@ -507,7 +508,7 @@ export const RegistroInventarioForm = () => {
                             </Accordion.Body>
                         </Accordion.Item>
 
-                        <Accordion.Item eventKey="3">
+                        <Accordion.Item eventKey="4">
                             <Accordion.Header>Garantía y Fechas de Control</Accordion.Header>
                             <Accordion.Body>
                                 <Row>

@@ -305,7 +305,7 @@ export const TableInventarioRedes = () => {
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]} dataKey="idSerial" selectionMode="checkbox" selection={SelectedData} onSelectionChange={(e) => setSelectedData(e.value)}
                     //onRowSelect={handleFormTask} 
-                    filters={filters}
+                   
                     emptyMessage="No se encontró ningún registro" currentPageReportTemplate="Viendo {first} a {last} de {totalRecords} registros " size="small"
                     onFilter={(e) => setFilters(e.filters)}
                     scrollable scrollHeight="600px" style={{ minWidth: '50rem' }}>

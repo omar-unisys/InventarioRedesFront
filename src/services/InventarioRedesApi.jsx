@@ -27,7 +27,6 @@ const updateInventarioRedes = async (idInventarioRedes, inventario) => {
         return false;
        
         
-       
     } else {
         inventario.FechaModificacion = new Date().toLocaleDateString('fr-CA', {
             timeZone: 'UTC',
