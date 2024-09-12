@@ -57,22 +57,32 @@ const getAll = async () => {
 
 const createInventarioRedes = async (inventario) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/`;
-    //console.log(url);
-    //console.log(inventario);
-    inventario.Administrable ? inventario.Administrable = 1 : inventario.Administrable = 0;
-    inventario.Conectado ? inventario.Conectado = 1 : inventario.Conectado = 0;
-    inventario.InStock ? inventario.InStock = 1 : inventario.InStock = 0;
-    //console.log(JSON.stringify(inventario));
-    const res = await fetch(url, {
-        method: "POST",
-        body: JSON.stringify(inventario),
-        headers: { 'Content-Type': 'application/json' }
-    });
+    
+    // Convertir valores booleanos a enteros (0 o 1)
+    inventario.Administrable = inventario.Administrable ? 1 : 0;
+    inventario.Conectado = inventario.Conectado ? 1 : 0;
+    inventario.InStock = inventario.InStock ? 1 : 0;
 
-    const data = await res.json();
-    //console.log(data);
-    return data;
-}
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(inventario),
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            // Si la respuesta HTTP no es ok, lanzar un error con el mensaje recibido del backend
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error en la solicitud de crear inventario:', error);
+        throw error; // Propagar el error para manejarlo en el lugar donde se llama a la función
+    }
+};
 
 const deleteInventarioRedes = async (idInventarioRedes) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/${idInventarioRedes}`;

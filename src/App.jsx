@@ -13,6 +13,7 @@ import { TableInventarioRedes } from  './components/TableInventarioRedes';
 import { RegistroInventarioForm } from './components/RegistroInventarioForm';
 import { UpdateInventarioForm } from './components/UpdateInventarioForm'; 
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
+import { ExcelReader } from './components/ExcelReader'; 
 
 function App() {
   const resetTimer = useIdleTimer(() => {
@@ -71,6 +72,7 @@ function App() {
           <Route path="/inventario/RegistroInventarioForm/" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
+          <Route path="/inventario/ExcelReader/" element={<ExcelReader/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
       </AuthProvider>

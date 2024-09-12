@@ -13,4 +13,21 @@
   text-align: center;
   padding: 10px;
 }
+.clearfilterStyle{
 
+  border: solid 1px #3366CC;
+  border-radius: 10px;
+  padding: 8px;
+
+}
+  
+.search-button {
+  border-radius: 0 7px 7px 0; /* Redondea las esquinas derecha del botón */
+  border-left: 0; /* Elimina el borde izquierdo para que se una con el campo de entrada */
+  background: #6366f1;
+}
+.p-column-filter {
+  background-color: #f0f0f0; /* Cambia el color de fondo del filtro */
+  border-radius: 1px; /* Aplica un borde redondeado */
+  padding: 1px; /* Añade un relleno */
+}

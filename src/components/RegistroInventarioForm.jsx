@@ -14,7 +14,7 @@ import Swal from 'sweetalert2';
 import { data } from 'jquery';
 
 export const RegistroInventarioForm = () => {
-    const {idInventarioRedes} = useParams();
+    const { idInventarioRedes } = useParams();
     const navigate = useNavigate();
     const [inventario, setInventario] = useState({
         idSerial: '',
@@ -60,10 +60,10 @@ export const RegistroInventarioForm = () => {
 
     useEffect(() => {
         InventarioRedesApi.getAll().then((data) => setInventario(data));
-        idInventarioRedes ? getInventarioRedesBy () : resetForm();
-    }, []); 
+        idInventarioRedes ? getInventarioRedesBy() : resetForm();
+    }, []);
 
-   
+
 
     const resetForm = () => {
         setTitle("Registro de inventario");
@@ -88,9 +88,12 @@ export const RegistroInventarioForm = () => {
     }
 
     const saveInventario = async () => {
-        await InventarioRedesApi.createInventarioRedes(inventario).then(response => {
-            console.log(response);
-            if (!response.message) {
+        const navigate = useNavigate();
+        
+        try {
+            const response = await InventarioRedesApi.createInventarioRedes(inventario);
+    
+            if (response && response.idSerial) { // Ajusta esta condición según el campo que indica éxito en tu respuesta
                 Swal.fire({
                     title: '',
                     text: 'Se ha guardado el formulario correctamente',
@@ -107,19 +110,27 @@ export const RegistroInventarioForm = () => {
                     confirmButtonText: 'Ok'
                 });
             }
-        });
-    }
+        } catch (error) {
+            Swal.fire({
+                title: '',
+                text: 'Hubo un problema con la solicitud. Por favor intente de nuevo',
+                icon: 'error',
+                confirmButtonText: 'Ok'
+            });
+            console.error('Error al guardar el inventario:', error);
+        }
+    };
 
-    const getInventarioRedesBy = async() => {
+    const getInventarioRedesBy = async () => {
         await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes).then(responseData => {
-            if(responseData.length > 0) {
+            if (responseData.length > 0) {
                 setInventario(responseData[0]);
                 console.log(responseData[0]);
                 setTitle("Registro de horas - " + responseData[0].groupActivity);
                 setIsDisabled(true);
-            }else{
+            } else {
                 navigate("/inventario/RegistroInventarioForm", { replace: true });
-            }            
+            }
         });
     }
     return (
@@ -130,7 +141,7 @@ export const RegistroInventarioForm = () => {
 
 
                 <Container>
-                    <Accordion defaultActiveKey={['0', '1', '2', '3','4']} alwaysOpen>
+                    <Accordion defaultActiveKey={['0', '1', '2', '3', '4']} alwaysOpen>
                         <Accordion.Item eventKey="0">
                             <Accordion.Header>Identificacion del equipo</Accordion.Header>
                             <Accordion.Body>
@@ -141,7 +152,7 @@ export const RegistroInventarioForm = () => {
                                                 name='idSerial'
                                                 defaultValue={""}
                                                 value={inventario.idSerial}
-                                                onChange={e => setInventario({ ...inventario, idSerial: e.target.value})}
+                                                onChange={e => setInventario({ ...inventario, idSerial: e.target.value })}
                                                 required
                                             />
                                             <Form.Control.Feedback type="invalid">
@@ -262,7 +273,7 @@ export const RegistroInventarioForm = () => {
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
                                                 onChange={e => setInventario({ ...inventario, InStock: e.checked })}
-                                                checked={inventario.InStock || false}>    
+                                                checked={inventario.InStock || false}>
                                             </Checkbox>
                                             <label htmlFor="chInStock" className="ml-2">En Stock</label>
                                         </div>
@@ -361,7 +372,7 @@ export const RegistroInventarioForm = () => {
                                 </Row>
                             </Accordion.Body>
                         </Accordion.Item>
-                        
+
                         <Accordion.Item eventKey="3">
                             <Accordion.Header>Ubicación y Sede</Accordion.Header>
                             <Accordion.Body>
@@ -620,7 +631,7 @@ export const RegistroInventarioForm = () => {
                                                     day: '2-digit'
                                                 })}
                                                 onChange={e => setInventario({ ...inventario, FechaModificacion: e.target.value })}
-                                            disabled ={true}
+                                                disabled={true}
                                             />
                                         </FloatingLabel>
                                     </Col>
