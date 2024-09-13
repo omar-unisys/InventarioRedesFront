@@ -534,15 +534,7 @@ const formatDate = (value) => {
                         style={{ minWidth: '10rem' }}
                     />
                     {renderColumn("Comentario", "Comentario")}
-                    <Column
-                        field="Conectado"
-                        header="Conectado"
-                        filter
-                        filterMenuStyle={{ width: '7rem' }}
-                        style={{ minWidth: '10rem' }}
-                        body={conectadoBodyTemplate}
-                        filterElement={conectadoRowFilterTemplate}
-                    />
+                    
                 </DataTable>
             </div>
         </div>
