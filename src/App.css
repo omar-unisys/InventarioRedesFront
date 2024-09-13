@@ -26,8 +26,28 @@
   border-left: 0; /* Elimina el borde izquierdo para que se una con el campo de entrada */
   background: #6366f1;
 }
-.p-column-filter {
-  background-color: #f0f0f0; /* Cambia el color de fondo del filtro */
-  border-radius: 1px; /* Aplica un borde redondeado */
-  padding: 1px; /* Añade un relleno */
+
+.p-column-filter-menu-button {
+  background-color: #f9fafb; /* Color de fondo del filtro */
+  border-radius: 5px; /* Borde redondeado */
+  padding: 1px; /* Relleno */
+  display: flex; /* Usa flexbox para alinear el contenido */
+  align-items: center; /* Alinea el contenido verticalmente */
+  justify-content: center; /* Alinea el contenido horizontalmente */
+}
+
+.p-column-filter .pi {
+  font-family: 'PrimeIcons'; /* Asegúrate de que la fuente es PrimeIcons */
+  font-size: 1rem; /* Tamaño del icono */
+  color: #298368; /* Color del icono (ajusta según tu diseño) */
+}
+
+.p-button-sm{
+  background-color: #3366CC; /* Color de fondo del filtro */ 
+  border-radius: 5px; /* Borde redondeado */
+  color: white;
+}
+
+.p-column-filter-matchmode-dropdown{
+  display: none;
 }
