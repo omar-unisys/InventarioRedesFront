@@ -16,7 +16,6 @@ import moment from 'moment';
 
 export const UpdateInventarioForm = () => {
     const { idInventarioRedes } = useParams();
-    console.log("Parametros " + idInventarioRedes);
     const navigate = useNavigate();
     const [inventario, setInventario] = useState({
         idSerial: '',
@@ -53,7 +52,9 @@ export const UpdateInventarioForm = () => {
         Conectado: false,
         InStock: false,
         idModified: false,
-        idSerialAnterior: ""
+        idSerialAnterior: "",
+        cambioInStock: false,
+        FechaInStock:""
     });
 
     const [validated, setValidated] = useState(false);
@@ -82,7 +83,6 @@ export const UpdateInventarioForm = () => {
         e.preventDefault();
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
-            //console.log(form);
         } else {
             //Guardar los datos
             saveInventario();
@@ -92,9 +92,11 @@ export const UpdateInventarioForm = () => {
     }
 
     const saveInventario = async () => {
-        
+        if(inventario.cambioInStock==true && inventario.InStock==false){
+            inventario.FechaInStock = inventario.FechaModificacion 
+        }
         await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventario).then(response => {
-            console.log(response);
+            console.log(inventario);
 
             if (!response) {
                 Swal.fire({
@@ -132,43 +134,53 @@ export const UpdateInventarioForm = () => {
 
 
     const getInventarioRedesBy = async () => {
-        await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes).then(responseData => {
+        try {
+            const responseData = await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes);
+    
             if (responseData.length > 0) {
-
-                setInventario(responseData[0]);
-
-                console.log(responseData[0]);
-
-                responseData[0].FechaSoporte = formatDate(new Date(responseData[0].FechaSoporte));
-                responseData[0].FechaGarantia = formatDate(new Date(responseData[0].FechaGarantia));
-                responseData[0].FechaEoL = formatDate(new Date(responseData[0].FechaEoL));
-                responseData[0].FechaIngreso = formatDate(new Date(responseData[0].FechaIngreso));
-                responseData[0].FechaModificacion = formatDate(new Date(responseData[0].FechaModificacion));
-
-                if (responseData[0].Administrable == 1) {
-                    responseData[0].Administrable = true;
-                } else {
-                    responseData[0].Administrable = false;
-                }
-                if (responseData[0].Conectado == 1) {
-                    responseData[0].Conectado = true;
-                } else {
-                    responseData[0].Conectado = false;
-                }
-                if (responseData[0].InStock == 1) {
-                    responseData[0].InStock = true;
-                } else {
-                    responseData[0].InStock = false;
-                }
-                console.log(responseData[0].FechaSoporte);
-                setTitle("Registro del serial - " + responseData[0].idSerial);
-
-
+                const [data] = responseData;  // Desestructuración para obtener el primer elemento
+    
+                // Actualiza el estado con el primer elemento
+                setInventario(data);
+    
+                // Función para formatear fechas
+                const formatDateFields = (fields) => {
+                    fields.forEach(field => {
+                        if (data[field]) data[field] = formatDate(new Date(data[field]));
+                    });
+                };
+    
+                // Campos de fecha a formatear
+                const dateFields = [
+                    'FechaSoporte',
+                    'FechaGarantia',
+                    'FechaEoL',
+                    'FechaIngreso',
+                    'FechaModificacion'
+                ];
+                formatDateFields(dateFields);
+    
+                // Función para convertir valores booleanos
+                const toBoolean = (value) => value === 1;
+    
+                // Actualiza los valores booleanos
+                data.Administrable = toBoolean(data.Administrable);
+                data.Conectado = toBoolean(data.Conectado);
+                data.InStock = toBoolean(data.InStock);
+    
+                // Configura el título
+                setTitle(`Registro del serial - ${data.idSerial}`);
+                
+    
             } else {
                 navigate("/inventario/UpdateInventarioForm", { replace: true });
             }
-        });
-    }
+        } catch (error) {
+            console.error("Error fetching inventory data:", error);
+            // Aquí puedes manejar el error de la manera que necesites
+        }
+    };
+    
 
     
 
@@ -311,7 +323,7 @@ export const UpdateInventarioForm = () => {
                                     <Col sm>
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked })}
+                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInStock:true })}
                                                 checked={inventario.InStock || false}>
                                             </Checkbox>
                                             <label htmlFor="chInStock" className="ml-2">En Stock</label>
@@ -669,7 +681,7 @@ export const UpdateInventarioForm = () => {
                                                     month: '2-digit',
                                                     day: '2-digit'
                                                 })}
-                                                onChange={e => setInventario({ ...inventario, FechaModificacion: e.target.value })}
+                                                onChange={e => setInventario({ ...inventario, FechaModificacion: e.target.value})}
                                                 disabled={true}
                                             />
                                         </FloatingLabel>

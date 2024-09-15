@@ -50,7 +50,9 @@ export const RegistroInventarioForm = () => {
         Comentario: '',
         Conectado: false,
         InStock: false,
-        hasError: false
+        hasError: false,
+        cambioInStock: false,
+        FechaInStock:''
     });
 
     const [validated, setValidated] = useState(false);
@@ -272,7 +274,7 @@ export const RegistroInventarioForm = () => {
                                     <Col sm>
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked })}
+                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock:true })}
                                                 checked={inventario.InStock || false}>
                                             </Checkbox>
                                             <label htmlFor="chInStock" className="ml-2">En Stock</label>

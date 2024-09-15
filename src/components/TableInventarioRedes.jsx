@@ -31,8 +31,8 @@ export const TableInventarioRedes = () => {
         const fetchData = async () => {
             try {
                 const data = await InventarioRedesApi.getAll();
-                setInventario(getDates(data));
                 const formattedData = getDates(data);
+                setInventario(getDates(data));
                 initFilters(); // Inicializa los filtros después de cargar los datos
                 setOriginalData(formattedData); // Guardar los datos originales
             } catch (error) {
@@ -54,32 +54,31 @@ export const TableInventarioRedes = () => {
     const getDates = (data) => {
         // Función auxiliar para convertir fechas
         const convertDate = (date) => {
-            if (!date || date === "null" || date === "undefined") return ""; // Retorna una cadena vacía si la fecha es nula o indefinida
+            if (!date || date === "null" || date === "undefined") return null; // Retorna null si la fecha es nula o indefinida
     
             // Asegura de que la fecha sea válida
             const parsedDate = new Date(date);
-            return isNaN(parsedDate.getTime()) ? "" : parsedDate; // Retorna una cadena vacía si la fecha no es válida
+            return isNaN(parsedDate.getTime()) ? null : parsedDate; // Retorna null si la fecha no es válida
         };
     
         // Función auxiliar para convertir booleanos a 'Si' o 'No'
         const convertBooleanToYesNo = (value) => (value === 1 ? 'Si' : 'No');
     
-        return (data || []).map((d) => {
-            console.log(data)
-            return {
-                ...d,  // Mantén las propiedades originales
-                FechaSoporte: convertDate(d.FechaSoporte),
-                FechaGarantia: convertDate(d.FechaGarantia),
-                FechaEoL: convertDate(d.FechaEoL),
-                FechaIngreso: convertDate(d.FechaIngreso),
-                FechaModificacion: convertDate(d.FechaModificacion),
-                InStock: convertBooleanToYesNo(d.InStock),
-                Conectado: convertBooleanToYesNo(d.Conectado),
-                Administrable: convertBooleanToYesNo(d.Administrable)
-            };
-        });
+        return (data || []).map((d) => ({
+            ...d,  // Mantén las propiedades originales
+            FechaSoporte: convertDate(d.FechaSoporte),
+            FechaGarantia: convertDate(d.FechaGarantia),
+            FechaEoL: convertDate(d.FechaEoL),
+            FechaIngreso: convertDate(d.FechaIngreso),
+            FechaModificacion: convertDate(d.FechaModificacion),
+            InStock: convertBooleanToYesNo(d.InStock),
+            Conectado: convertBooleanToYesNo(d.Conectado),
+            Administrable: convertBooleanToYesNo(d.Administrable)
+        }));
     };
+    
 
+    
     //Se definen las opciones de los filtros en cada columna
     const initFilters = () => {
         setFilters({

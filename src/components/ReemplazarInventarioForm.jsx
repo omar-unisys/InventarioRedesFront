@@ -90,7 +90,9 @@ export const ReemplazarInventarioForm = () => {
         FechaModificacion: '',
         Comentario: '',
         Conectado: false,
-        InStock: false
+        InStock: false,
+        cambioInStock: false,
+        FechaInStock:''
     });
 
     const handleClear = () => {
@@ -127,7 +129,9 @@ export const ReemplazarInventarioForm = () => {
             FechaModificacion: '',
             Comentario: '',
             Conectado: false,
-            InStock: false
+            InStock: false,
+            cambioInStock: false,
+            FechaInStock:''
         });
     };
 
@@ -144,29 +148,24 @@ export const ReemplazarInventarioForm = () => {
         InventarioRedesApi.getInventarioRedesByID(idInventarioRedes).then((dataInvTable) => setInventarioTable(getDates(dataInvTable)));
     }, []);
 
-    const getDates = (data) => {
-        return [...(data || [])].map((d) => {
-            d.FechaSoporte = new Date(d.FechaSoporte);
-            d.FechaGarantia = new Date(d.FechaGarantia);
-            d.FechaEoL = new Date(d.FechaEoL);
-            d.FechaIngreso = new Date(d.FechaIngreso);
-            d.FechaModificacion = new Date(d.FechaModificacion);
-            if (d.InStock == 1)
-                d.InStock = "Si"
-            else
-                d.InStock = "No"
+    const booleanToString = (value) => (value === 1 ? "Si" : "No");
 
-            if (d.Conectado == 1)
-                d.Conectado = "Si"
-            else
-                d.Conectado = "No"
-            if (d.Administrable == 1)
-                d.Administrable = "Si"
-            else
-                d.Administrable = "No"
-            return d;
+const getDates = (data = []) => 
+    data.map((d) => {
+        // Convertir fechas
+        const dates = ['FechaSoporte', 'FechaGarantia', 'FechaEoL', 'FechaIngreso', 'FechaModificacion'];
+        dates.forEach(date => {
+            if (d[date]) d[date] = new Date(d[date]);
         });
-    };
+
+        // Convertir valores booleanos
+        d.InStock = booleanToString(d.InStock);
+        d.Conectado = booleanToString(d.Conectado);
+        d.Administrable = booleanToString(d.Administrable);
+
+        return d;
+    });
+
     
 
     const handleCancel = () => {
@@ -229,30 +228,39 @@ export const ReemplazarInventarioForm = () => {
         e.preventDefault();
     
         try {
-            console.log("Id Tabla: " + idInventarioRedes);
-    
             // Espera la respuesta de la API
             const response = await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes);
     
             // Verifica si la respuesta es válida y tiene al menos un elemento
-            if (response && response.length > 0) {
-                // Asegúrate de que las fechas sean válidas
-                response[0].FechaSoporte = formatDate(new Date(response[0].FechaSoporte));
-                response[0].FechaGarantia = formatDate(new Date(response[0].FechaGarantia));
-                response[0].FechaEoL = formatDate(new Date(response[0].FechaEoL));
-                response[0].FechaIngreso = formatDate(new Date(response[0].FechaIngreso));
-                response[0].FechaModificacion = formatDate(new Date(response[0].FechaModificacion));
+            if (response?.length > 0) {
+                const [data] = response; // Desestructuración para obtener el primer elemento
     
-                // Convierte los valores de "Si"/"No" a booleanos
-                response[0].InStock = response[0].InStock === "Si";
-                response[0].Administrable = response[0].Administrable === "Si";
-                response[0].Conectado = response[0].Conectado === "Si";
-
-                response[0].InStock= true;
-
-                setInventarioSaliente(response[0]);
-                console.log(response[0]);
-
+                // Función para formatear fechas
+                const formatDateFields = (fields) => {
+                    fields.forEach(field => {
+                        if (data[field]) data[field] = formatDate(new Date(data[field]));
+                    });
+                };
+    
+                // Campos de fecha a formatear
+                const dateFields = [
+                    'FechaSoporte',
+                    'FechaGarantia',
+                    'FechaEoL',
+                    'FechaIngreso',
+                    'FechaModificacion'
+                ];
+                formatDateFields(dateFields);
+    
+                // Función para convertir "Si"/"No" a booleanos
+                const toBoolean = (value) => value === "Si";
+    
+                // Actualiza los valores booleanos
+                data.InStock = true; // Cambia esto según tu lógica específica
+                data.Administrable = toBoolean(data.Administrable);
+                data.Conectado = toBoolean(data.Conectado);
+    
+                setInventarioSaliente(data);
             } else {
                 console.warn("No se encontraron datos para el ID proporcionado.");
             }
@@ -260,6 +268,7 @@ export const ReemplazarInventarioForm = () => {
             console.error("Error al obtener o procesar los datos:", error);
         }
     };
+    
 
     const formatDate = (value) => {
         if (value == "Wed Dec 31 1969 19:00:00 GMT-0500 (Colombia Standard Time)" || value == null) {
@@ -554,7 +563,7 @@ export const ReemplazarInventarioForm = () => {
                                     <Col sm>
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked })}
+                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock:true })}
                                                 checked={inventario.InStock || false}
                                                 disabled
                                                 //disabled={isDisabled}
