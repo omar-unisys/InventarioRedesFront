@@ -15,16 +15,29 @@ import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 
 
-
 export const TableInventarioRedes = () => {
-    const [inventario, setInventario] = useState([]);
-    const [SelectedData, setSelectedData] = useState([]);
-    const navigate = useNavigate();
-    const [filters, setFilters] = useState(null);
-    const toast = useRef(null);
-    const [originalData, setOriginalData] = useState([]);
-    const [sortField, setSortField] = useState(null);
-    const [sortOrder, setSortOrder] = useState(null);
+
+    // Función para formatear fechas
+  const formatDate = (value) => {
+    if (value instanceof Date && !isNaN(value.getTime())) {
+        return value.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+    return ''; // Retorna una cadena vacía si el valor no es una fecha válida
+};
+
+   // Estado
+   const [inventario, setInventario] = useState([]);
+   const [SelectedData, setSelectedData] = useState([]);
+   const [filters, setFilters] = useState({});
+   const [sortField, setSortField] = useState(null);
+   const [sortOrder, setSortOrder] = useState(null);
+   const toast = useRef(null);
+   const [originalData, setOriginalData] = useState([]);
+   const navigate = useNavigate();
 
     //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
@@ -33,6 +46,7 @@ export const TableInventarioRedes = () => {
                 const data = await InventarioRedesApi.getAll();
                 const formattedData = getDates(data);
                 setInventario(getDates(data));
+                console.log("Inventario desde Tabla: ",getDates(data));
                 initFilters(); // Inicializa los filtros después de cargar los datos
                 setOriginalData(formattedData); // Guardar los datos originales
             } catch (error) {
@@ -71,6 +85,7 @@ export const TableInventarioRedes = () => {
             FechaEoL: convertDate(d.FechaEoL),
             FechaIngreso: convertDate(d.FechaIngreso),
             FechaModificacion: convertDate(d.FechaModificacion),
+            FechaInStock: convertDate(d.FechaInStock),
             InStock: convertBooleanToYesNo(d.InStock),
             Conectado: convertBooleanToYesNo(d.Conectado),
             Administrable: convertBooleanToYesNo(d.Administrable)
@@ -78,7 +93,6 @@ export const TableInventarioRedes = () => {
     };
     
 
-    
     //Se definen las opciones de los filtros en cada columna
     const initFilters = () => {
         setFilters({
@@ -91,6 +105,7 @@ export const TableInventarioRedes = () => {
             NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DireccionIp: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             InStock: { value: null, matchMode: FilterMatchMode.EQUALS },
+            FechaInStock: { value: null, matchMode: FilterMatchMode.DATE_IS },
             TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Pais: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Sede: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -100,7 +115,10 @@ export const TableInventarioRedes = () => {
             TipoServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DetalleServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Administrable: { value: null, matchMode: FilterMatchMode.EQUALS },
+
+        
             FechaSoporte: { value: null, matchMode: FilterMatchMode.DATE_IS },
+
             SoporteDetalle: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             FechaGarantia: { value: null, matchMode: FilterMatchMode.DATE_IS },
             GarantiaDetalle: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -112,9 +130,11 @@ export const TableInventarioRedes = () => {
             Comentario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             FechaModificacion:{ value: null, matchMode: FilterMatchMode.DATE_IS },
             Conectado: { value: null, matchMode: FilterMatchMode.EQUALS }
+            
         });
     };
 
+   
     // Template para el filtro de fecha
     const fechaSoporteFilterTemplate = (options) => (
         <Calendar
@@ -154,17 +174,12 @@ export const TableInventarioRedes = () => {
         return formatDate(rowData.FechaModificacion);
     };
 
-    // Formato de fecha
-const formatDate = (value) => {
-    if (value instanceof Date && !isNaN(value.getTime())) {
-        return value.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    }
-    return ''; // Retorna una cadena vacía si el valor no es una fecha válida
-};
+    //Template que devuelve la FechaModificación con formato 
+    const FechaInStockBodyTemplate = (rowData) => {
+        return formatDate(rowData.FechaInStock);
+    };
+
+  
 
 
     //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
@@ -255,23 +270,97 @@ const formatDate = (value) => {
     
 
 
+// Función para manejar filtros y actualizar el estado de datos filtrados
+const handleFilter = (e) => {
+    // Revisa y actualiza los filtros
+    const newFilters = Object.fromEntries(
+        Object.entries(e.filters).map(([key, value]) => {
+            if (value && value.value) {
+                return [key, value];
+            }
+            return [key, { value: null, matchMode: FilterMatchMode.CONTAINS }];
+        })
+    );
+    setFilters(newFilters);
+};
+
+
+    const applyFilters = (data, filters) => {
+        console.log('Aplicando filtros:', filters);
+        console.log('Datos originales:', data);
+
+        return data.filter(item => {
+            // Aplicar filtro global
+            if (filters.global && filters.global.value) {
+                const globalFilterValue = filters.global.value.toLowerCase(); // Valor del filtro global en minúsculas
+                const itemValues = Object.values(item).map(val => val ? val.toString().toLowerCase() : ''); // Valores del ítem en minúsculas
+                const matchesGlobalFilter = itemValues.some(val => val.includes(globalFilterValue));
+                if (!matchesGlobalFilter) return false;
+            }
+
+            // Aplicar filtros específicos de campo
+            for (const [field, filter] of Object.entries(filters)) {
+                if (field === 'global') continue; // Ya se manejó el filtro global
+
+                const value = item[field];
+                const filterValue = filter ? filter.value : null;
+
+                if (filterValue !== null) {
+                    switch (filter.matchMode) {
+                        case FilterMatchMode.STARTS_WITH:
+                            if (!value.toString().toLowerCase().startsWith(filterValue.toString().toLowerCase())) return false;
+                            break;
+                        case FilterMatchMode.CONTAINS:
+                            if (!value.toString().toLowerCase().includes(filterValue.toString().toLowerCase())) return false;
+                            break;
+                        case FilterMatchMode.EQUALS:
+                            if (value.toString().toLowerCase() !== filterValue.toString().toLowerCase()) return false;
+                            break;
+                        case FilterMatchMode.DATE_IS:
+                            const dateValue = new Date(value);
+                            const filterDate = new Date(filterValue);
+                            if (dateValue.toDateString() !== filterDate.toDateString()) return false;
+                            break;
+                        default:
+                            return true;
+                    }
+                }
+            }
+
+            return true;
+        });
+    };
 
 
 
     //Se crea el archivo de excel con columnas y filas
     const exportExcel = () => {
         import('xlsx').then((xlsx) => {
-            const worksheet = xlsx.utils.json_to_sheet(inventario);
+            // Aplicar filtros a los datos
+            const filteredData = applyFilters(inventario, filters);
+
+            // Verificar si hay datos filtrados antes de exportar
+            if (filteredData.length === 0) {
+                alert('No hay datos que coincidan con los filtros aplicados.');
+                return;
+            }
+
+            // Convertir los datos filtrados a una hoja de cálculo
+            const worksheet = xlsx.utils.json_to_sheet(filteredData);
             const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
             const excelBuffer = xlsx.write(workbook, {
                 bookType: 'xlsx',
                 type: 'array'
             });
+
+            // Guardar el archivo Excel
             saveAsExcelFile(excelBuffer, 'inventario');
         });
     };
 
-    //Se da nombre y formato xlsx al archivo creado
+
+
+    // Se da nombre y formato xlsx al archivo creado
     const saveAsExcelFile = (buffer, fileName) => {
         import('file-saver').then((module) => {
             if (module && module.default) {
@@ -419,6 +508,8 @@ const formatDate = (value) => {
         />
     );
 
+   
+
     return (
         <div>
             <Toast ref={toast} />
@@ -439,7 +530,7 @@ const formatDate = (value) => {
                     currentPageReportTemplate="Viendo {first} a {last} de {totalRecords} registros"
                     size="small"
                     filters={filters}
-                    onFilter={(e) => setFilters(e.filters)}
+                    onFilter={handleFilter}
                     sortField={sortField}  // Añadir esta línea
                     sortOrder={sortOrder}  // Añadir esta línea
                     onSort={(e) => {
@@ -461,6 +552,26 @@ const formatDate = (value) => {
                         header="En Stock"
                         filter
                         {...customColumnProps.enStock}
+                    />
+                    <Column
+                        field="FechaInStock"
+                        header="Fecha Activo"
+                        sortable
+                        filter
+                        filterElement={fechaSoporteFilterTemplate}
+                        body={FechaInStockBodyTemplate}
+                        style={{ minWidth: '10rem' }}
+                    
+                       
+                    />
+                    <Column
+                        field="FechaIngreso"
+                        header="Fecha de Ingreso"
+                        sortable
+                        filter
+                        filterElement={fechaSoporteFilterTemplate}
+                        body={FechaIngresoBodyTemplate}
+                        style={{ minWidth: '10rem' }}
                     />
                     <Column
                     field="idCriticidad"
@@ -490,6 +601,8 @@ const formatDate = (value) => {
                         filterElement={fechaSoporteFilterTemplate}
                         body={FechaSoporteBodyTemplate}
                         style={{ minWidth: '10rem' }}
+                    
+                       
                     />
                     {renderColumn("SoporteDetalle", "Detalle Soporte")}
                     <Column
@@ -514,15 +627,7 @@ const formatDate = (value) => {
                     {renderColumn("EolDetalle", "Detalle EoL")}
                     {renderColumn("VrsFirmware", "Versión Firmware")}
                     {renderColumn("NumPuertos", "Número de Puertos")}
-                    <Column
-                        field="FechaIngreso"
-                        header="Fecha de Ingreso"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaIngresoBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
+                    
                     <Column
                         field="FechaModificacion"
                         header="Fecha de Modificación"

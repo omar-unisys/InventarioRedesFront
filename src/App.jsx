@@ -15,6 +15,7 @@ import { UpdateInventarioForm } from './components/UpdateInventarioForm';
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
 import { ExcelReader } from './components/ExcelReader'; 
 
+
 function App() {
   const resetTimer = useIdleTimer(() => {
     const dateSession = Cookies.get('dateSession_fact');

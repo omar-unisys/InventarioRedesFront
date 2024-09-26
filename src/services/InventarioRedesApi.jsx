@@ -9,43 +9,56 @@ const getInventarioRedesByID = async (idInventarioRedes) => {
 
 const updateInventarioRedes = async (idInventarioRedes, inventario) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/${idInventarioRedes}`;
+    console.log("URL de la solicitud:", url);
 
+    // Convertir valores booleanos a enteros (0 o 1)
+    inventario.Administrable = inventario.Administrable ? 1 : 0;
+    inventario.Conectado = inventario.Conectado ? 1 : 0;
+    inventario.InStock = inventario.InStock ? 1 : 0;
+
+    // Función auxiliar para convertir a ISO solo si hay un valor válido
+    const toISOStringSafe = (dateValue) => {
+        if (!dateValue) return null; // Devuelve null si no hay valor
+        const date = new Date(dateValue);
+        return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
+    };
+
+    inventario.FechaSoporte = toISOStringSafe(inventario.FechaSoporte);
+    inventario.FechaGarantia = toISOStringSafe(inventario.FechaGarantia);
+    inventario.FechaEoL = toISOStringSafe(inventario.FechaEoL);
+    inventario.FechaIngreso = toISOStringSafe(inventario.FechaIngreso);
+    inventario.FechaInStock = toISOStringSafe(inventario.FechaInStock);
+    inventario.FechaModificacion = new Date().toISOString().split('T')[0];
     
+    console.log("Inventario antes de actualizar:", JSON.stringify(inventario, null, 2));
 
-    inventario.Administrable ? inventario.Administrable = 1 : inventario.Administrable = 0;
-    inventario.Conectado ? inventario.Conectado = 1 : inventario.Conectado = 0;
-    inventario.InStock ? inventario.InStock = 1 : inventario.InStock = 0;
-
-
-    if (inventario.idModified == true) {
-        
-        createInventarioRedes(inventario);
-        console.log(inventario.idSerialAnterior);
-
-        deleteInventarioRedes(inventario.idSerialAnterior);
-        
-        return false;
-       
-        
-    } else {
-        inventario.FechaModificacion = new Date().toLocaleDateString('fr-CA', {
-            timeZone: 'UTC',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        console.log(inventario.FechaModificacion);
+    try {
         const res = await fetch(url, {
             method: "PUT",
             body: JSON.stringify(inventario),
             headers: { 'Content-Type': 'application/json' }
         });
+    
+        if (!res.ok) {
+            const errorData = await res.json();
+            console.error('Error al actualizar:', errorData);
+            throw new Error(errorData.message || 'Error desconocido al actualizar el inventario');
+        }
+    
         const data = await res.json();
-        //console.log(data);
-        return false;
+        console.log('Actualización exitosa:', data);
+        return data;
+        
+    } catch (error) {
+        console.error('Error en la solicitud de actualización:', error);
     }
+};
 
-}
+
+
+
+
+
 
 const getAll = async () => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/`;

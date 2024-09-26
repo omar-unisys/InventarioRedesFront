@@ -54,7 +54,9 @@ export const ReemplazarInventarioForm = () => {
         FechaModificacion: '',
         Comentario: '',
         Conectado: false,
-        InStock: false
+        InStock: false,
+        cambioInStock: false,
+        FechaInStock:''
     });
 
     const [inventarioSaliente, setInventarioSaliente] = useState({
