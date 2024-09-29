@@ -10,6 +10,7 @@ import { HomePage } from './pages/HomePage';
 import { AdminPage } from './pages/AdminPage';
 import { Login } from './components/Login';
 import { TableInventarioRedes } from  './components/TableInventarioRedes';  
+import { TableFacturasInventarioRedes } from  './components/TableFacturasInventarioRedes';  
 import { RegistroInventarioForm } from './components/RegistroInventarioForm';
 import { UpdateInventarioForm } from './components/UpdateInventarioForm'; 
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
@@ -70,6 +71,7 @@ function App() {
           <Route path="/" element={<HomePage/>} />
           <Route path="/admin/aplicaciones" element={<AdminPage/>} />
           <Route path="/inventario/inventarioRedes/" element={<TableInventarioRedes/>} />
+          <Route path="/inventario/facturasInventarioRedes/" element={<TableFacturasInventarioRedes/>} />
           <Route path="/inventario/RegistroInventarioForm/" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />

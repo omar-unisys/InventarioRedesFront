@@ -492,7 +492,7 @@ export const RegistroInventarioForm = () => {
                                     </Col>
 
                                     <Col sm>
-                                        <FloatingLabel controlId="txtidFilial" label="Filial" className="mb-3">
+                                        <FloatingLabel controlId="txtidFilial" label="Filial en uso" className="mb-3">
                                             <Form.Control as="select" type="select"
                                                 name='idFilial'
                                                 value={inventario.idFilial}
@@ -526,7 +526,7 @@ export const RegistroInventarioForm = () => {
                             <Accordion.Body>
                                 <Row>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha de Soporte" className="mb-3">
+                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha Vencimiento Soporte" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Soporte"
                                                 name='FechaSoporte'
                                                 value={new Date(inventario.FechaSoporte).toLocaleDateString('fr-CA', {
@@ -551,7 +551,7 @@ export const RegistroInventarioForm = () => {
                                         </FloatingLabel>
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaGarantia" label="Fecha de Garantía" className="mb-3">
+                                        <FloatingLabel controlId="txtFechaGarantia" label="Fecha Vencimiento Garantía" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Garantía"
                                                 name='FechaGarantia'
                                                 value={new Date(inventario.FechaGarantia).toLocaleDateString('fr-CA', {

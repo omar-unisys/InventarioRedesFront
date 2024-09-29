@@ -9,27 +9,26 @@ import 'primeicons/primeicons.css';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
-import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 
 
-export const TableInventarioRedes = () => {
+export const TableFacturasInventarioRedes = () => {
 
     // Función para formatear fechas
-  const formatDate = (value) => {
-    if (value instanceof Date && !isNaN(value.getTime())) {
-        return value.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    }
-    return ''; // Retorna una cadena vacía si el valor no es una fecha válida
-};
+    const formatDate = (value) => {
+        if (value instanceof Date && !isNaN(value.getTime())) {
+            return value.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+        return ''; // Retorna una cadena vacía si el valor no es una fecha válida
+    };
 
    // Estado
-   const [inventario, setInventario] = useState([]);
+   const [facturas, setFacturas] = useState([]);
    const [SelectedData, setSelectedData] = useState([]);
    const [filters, setFilters] = useState({});
    const [sortField, setSortField] = useState(null);
@@ -42,10 +41,10 @@ export const TableInventarioRedes = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await InventarioRedesApi.getAll();
+                const data = await InventarioRedesApi.getAllFacturas();
                 const formattedData = getDates(data);
-                setInventario(getDates(data));
-                console.log("Inventario desde Tabla: ",getDates(data));
+                setFacturas(getDates(data));
+                console.log("Facturas Tabla: ",getDates(data));
                 initFilters(); // Inicializa los filtros después de cargar los datos
                 setOriginalData(formattedData); // Guardar los datos originales
             } catch (error) {
@@ -96,46 +95,43 @@ export const TableInventarioRedes = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            idCriticidad: { value: null, matchMode: FilterMatchMode.EQUALS },
-            idTipoEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Marca: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Modelo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            DireccionIp: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            InStock: { value: null, matchMode: FilterMatchMode.EQUALS },
-            FechaInStock: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Pais: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Filial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Sede: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Edificio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Piso: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Ubicacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            TipoServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            UbicacionFisicaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            CriticidadPrevia: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            CriticidadActual: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            FechaModificacionIngreso: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            TipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
+            Modelo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Fabricante: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DetalleServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Administrable: { value: null, matchMode: FilterMatchMode.EQUALS },
-
-        
-            FechaSoporte: { value: null, matchMode: FilterMatchMode.DATE_IS },
-
-            SoporteDetalle: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            FechaGarantia: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            GarantiaDetalle: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            FechaEoL: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            EolDetalle: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            VrsFirmware: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            NumPuertos: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            FechaIngreso: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            Comentario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            FechaModificacion:{ value: null, matchMode: FilterMatchMode.DATE_IS },
-            Conectado: { value: null, matchMode: FilterMatchMode.EQUALS }
+            Observaciones: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            IPEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            NroSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ActivoInactivo: { value: null, matchMode: FilterMatchMode.EQUALS },
+            EmpresaPropietariaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            EstadisticasAtencionSitio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },        
+            Pais: { value: null, matchMode: FilterMatchMode.EQUALS },
+            QueSalen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            NumeroElementos: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            TipoCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            TipoPrecio: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            ValorUnitarioUSD: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            DisponibilidadRealCliente: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ANSComprometido: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ANSCumplido: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            DescuentoRecargoVolumen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            DescuentoANS:{ value: null, matchMode: FilterMatchMode.DATE_IS },
+            TotalFacturarUSD: { value: null, matchMode: FilterMatchMode.EQUALS }
             
         });
     };
 
    
     // Template para el filtro de fecha
-    const fechaSoporteFilterTemplate = (options) => (
+    const fechaModificacionIngresoFilterTemplate = (options) => (
         <Calendar
             value={options.value}
             onChange={(e) => options.filterApplyCallback(e.value)}
@@ -149,51 +145,18 @@ export const TableInventarioRedes = () => {
 
 
     //Template que devuelve la FechaSoporte con formato 
-    const FechaSoporteBodyTemplate = (rowData) => {
+    const FechaModificacionIngresoBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaSoporte);
     };
 
-    //Template que devuelve la FechaGarantia con formato 
-    const FechaGarantiaBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaGarantia);
-    };
-
-    //Template que devuelve la FechaEoL con formato 
-    const FechaEoLBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaEoL);
-    };
-
-    //Template que devuelve la FechaIngreso con formato 
-    const FechaIngresoBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaIngreso);
-    };
-
+   
     //Template que devuelve la FechaModificación con formato 
     const FechaModificacionBodyTemplate = (rowData) => {
         return formatDate(rowData.FechaModificacion);
     };
-
-    //Template que devuelve la FechaModificación con formato 
-    const FechaInStockBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaInStock);
-    };
-
   
 
 
-    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
-    const enStockOptions = [
-        { label: 'Sí', value: 'Si' },
-        { label: 'No', value: 'No' }
-    ];
-
-    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
-    const criticidadOptions = [
-        { label: 'Baja', value: 'Baja' },
-        { label: 'Media', value: 'Media' },
-        { label: 'Alta', value: 'Alta' },
-        { label: 'Muy Alta', value: 'Muy Alta' }
-    ];
 
 
     const createRowFilterTemplate = (options, itemTemplate) => (
@@ -220,51 +183,9 @@ export const TableInventarioRedes = () => {
     );
 
     const enStockRowFilterTemplate = (options) => createRowFilterTemplate(options, enStockItemTemplate);
-    const conectadoRowFilterTemplate = (options) => createRowFilterTemplate(options, conectadoItemTemplate);
     const administrableRowFilterTemplate = (options) => createRowFilterTemplate(options, administrableItemTemplate);
     const criticidadRowFilterTemplate = (options) => RowFilterTemplate(options);
 
-    //Determinar el color de las opciones Si o No de Administrable
-    const administrableItemTemplate = (option) => {
-        return <Tag value={option.label} severity={getSeverity(option.value)} />;
-    };
-
-    //Determinar el color de las opciones Si o No de Conectado
-    const conectadoItemTemplate = (option) => {
-        return <Tag value={option.label} severity={getSeverity(option.value)} />;
-    };
-
-    //Determinar el color de las opciones (Del filtro) Si o No de InStock
-    const enStockItemTemplate = (option) => {
-        return <Tag value={option.label} severity={getSeverity(option.value)} />;
-    };
-
-    //Retorna el color que se le va a gregar a las opciones. Reutilizado para Stok, Administrable y Conectado
-    const getSeverity = (value) => {
-        switch (value) {
-            case 'No':
-                return 'danger';
-            case 'Si':
-                return 'success';
-            default:
-                return 'info'; // Valor por defecto
-        }
-    };
-
-    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de InStock
-    const enStockBodyTemplate = (rowData) => {
-        return <Tag value={rowData.InStock} severity={getSeverity(rowData.InStock)} />;
-    };
-
-    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Conectado
-    const conectadoBodyTemplate = (rowData) => {
-        return <Tag value={rowData.Conectado} severity={getSeverity(rowData.Conectado)} />;
-    };
-
-    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Administrable
-    const administrableBodyTemplate = (rowData) => {
-        return <Tag value={rowData.Administrable} severity={getSeverity(rowData.Administrable)} />;
-    };
 
     
 
@@ -336,7 +257,7 @@ const handleFilter = (e) => {
     const exportExcel = () => {
         import('xlsx').then((xlsx) => {
             // Aplicar filtros a los datos
-            const filteredData = applyFilters(inventario, filters);
+            const filteredData = applyFilters(facturas, filters);
 
             // Verificar si hay datos filtrados antes de exportar
             if (filteredData.length === 0) {
@@ -353,7 +274,7 @@ const handleFilter = (e) => {
             });
 
             // Guardar el archivo Excel
-            saveAsExcelFile(excelBuffer, 'inventario');
+            saveAsExcelFile(excelBuffer, 'facturas');
         });
     };
 
@@ -416,7 +337,7 @@ const handleFilter = (e) => {
         console.log(SelectedData);
         Swal.fire({
             title: "",
-            text: `¿Quiere editar la información del inventario con Serial ${SelectedData.idSerial}?`,
+            text: `¿Quiere editar la información de la factura con Serial ${SelectedData.idSerial}?`,
             icon: "question",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
@@ -469,34 +390,6 @@ const handleFilter = (e) => {
         style: { minWidth: '7rem', textAlign: "left" }
     });
 
-    // Propiedades específicas para columnas con filtros personalizados o estilos únicos
-    const customColumnProps = {
-        enStock: {
-            filterMenuStyle: { width: '1rem' },
-            body: enStockBodyTemplate,
-            filterElement: enStockRowFilterTemplate,
-            style: { minWidth: '1rem' }
-        },
-        administrable: {
-            filterMenuStyle: { width: '1rem' },
-            body: administrableBodyTemplate,
-            filterElement: administrableRowFilterTemplate,
-            style: { minWidth: '1rem' }
-        },
-        dateColumn: {
-            sortable: true,
-            filterField: "FechaSoporte",
-            dataType: "date",
-            body: FechaSoporteBodyTemplate,
-            style: { minWidth: '10rem' }
-        },
-        criticidad: {
-            filterMenuStyle: { width: '1rem' },
-            filterElement: criticidadRowFilterTemplate,
-            style: { minWidth: '1rem' }
-        }
-        // Agrega más configuraciones específicas si es necesario
-    };
 
     const renderColumn = (field, header, extraProps = {}) => (
         <Column
@@ -513,18 +406,17 @@ const handleFilter = (e) => {
         <div>
             <Toast ref={toast} />
             <div className="card">
-                <h4 className='titleCenter'> Inventario de Redes</h4>
                 <DataTable
-                    value={inventario}
+                    value={facturas}
                     paginator
                     header={header}
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]}
-                    dataKey="idSerial"
+                    dataKey="NroSerial" // Ajusta esto si es necesario
                     selectionMode="single"
                     selection={SelectedData}
-                    onSelectionChange={(e) => setSelectedData(e.value ? e.value : null)} // Manejo simplificado
+                    onSelectionChange={(e) => setSelectedData(e.value ? e.value : null)}
                     emptyMessage="No se encontró ningún registro"
                     currentPageReportTemplate="Viendo {first} a {last} de {totalRecords} registros"
                     size="small"
@@ -541,82 +433,43 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    {renderColumn("idSerial", "Serial", { style: { minWidth: '12rem' } })}
-                    {renderColumn("Marca", "Marca")}
-                    {renderColumn("Modelo", "Modelo")}
-                    {renderColumn("NombreEquipo", "Nombre Equipo")}
-                    {renderColumn("DireccionIp", "Dirección Ip")}
-                    <Column field="InStock" header="En Stock" filter {...customColumnProps.enStock} />
-                    <Column
-                        field="FechaInStock"
-                        header="Fecha Activo"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaInStockBodyTemplate}
-                        style={{ minWidth: '10rem' }}
+                    <Column field="Filial" header="Filial" />
+                    <Column field="Sede" header="Sede" />
+                    <Column field="UbicacionFisicaEquipo" header="Ubicación Física" />
+                    <Column field="CriticidadPrevia" header="Criticidad Previa" />
+                    <Column field="CriticidadActual" header="Criticidad Actual" />
+                    <Column 
+                        field="FechaModificacionIngreso" 
+                        header="Fecha Modificación" 
+                        sortable 
+                        filter 
+                        filterElement={fechaModificacionIngresoFilterTemplate} // Usar el filtro de fecha
+                        body={FechaModificacionIngresoBodyTemplate} // Usar el template para formato
                     />
-                    <Column
-                        field="FechaIngreso"
-                        header="Fecha de Ingreso"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaIngresoBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    <Column field="idCriticidad" header="Criticidad" filter {...customColumnProps.criticidad} />
-                    {renderColumn("TipoRed", "Tipo de Red")}
-                    {renderColumn("Pais", "País")}
-                    {renderColumn("Sede", "Sede")}
-                    {renderColumn("Edificio", "Edificio")}
-                    {renderColumn("Piso", "Piso")}
-                    {renderColumn("Ubicacion", "Ubicación")}
-                    {renderColumn("TipoServicio", "Tipo Servicio")}
-                    {renderColumn("DetalleServicio", "Detalle Servicio")}
-                    <Column field="Administrable" header="Administrable" filter {...customColumnProps.administrable} />
-                    <Column
-                        field="FechaSoporte"
-                        header="Fecha Soporte"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaSoporteBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    {renderColumn("SoporteDetalle", "Detalle Soporte")}
-                    <Column
-                        field="FechaGarantia"
-                        header="Fecha Garantía"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaGarantiaBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    {renderColumn("GarantiaDetalle", "Detalle Garantía")}
-                    <Column
-                        field="FechaEoL"
-                        header="Fecha EoL"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaEoLBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    {renderColumn("EolDetalle", "Detalle EoL")}
-                    {renderColumn("VrsFirmware", "Versión Firmware")}
-                    {renderColumn("NumPuertos", "Número de Puertos")}
-                    <Column
-                        field="FechaModificacion"
-                        header="Fecha de Modificación"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaModificacionBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    {renderColumn("Comentario", "Comentario")}
+                    <Column field="TipoEquipo" header="Tipo de Equipo" />
+                    <Column field="Modelo" header="Modelo" />
+                    <Column field="Fabricante" header="Fabricante" />
+                    <Column field="TipoRed" header="Tipo de Red" />
+                    <Column field="DetalleServicio" header="Detalle Servicio" />
+                    <Column field="Observaciones" header="Observaciones" />
+                    <Column field="NombreEquipo" header="Nombre Equipo" />
+                    <Column field="IPEquipo" header="IP Equipo" />
+                    <Column field="NroSerial" header="Nro Serial" />
+                    <Column field="ActivoInactivo" header="Activo/Inactivo" />
+                    <Column field="EmpresaPropietariaEquipo" header="Empresa Propietaria" />
+                    <Column field="EstadisticasAtencionSitio" header="Estadísticas Atención Sitio" />
+                    <Column field="Pais" header="País" />
+                    <Column field="QueSalen" header="Que Salen" />
+                    <Column field="NumeroElementos" header="Número Elementos" />
+                    <Column field="TipoCriticidad" header="Tipo Criticidad" />
+                    <Column field="TipoPrecio" header="Tipo Precio" />
+                    <Column field="ValorUnitarioUSD" header="Valor Unitario (USD)" />
+                    <Column field="DisponibilidadRealCliente" header="Disponibilidad Real Cliente" />
+                    <Column field="ANSComprometido" header="ANS Comprometido" />
+                    <Column field="ANSCumplido" header="ANS Cumplido" />
+                    <Column field="DescuentoRecargoVolumen" header="Descuento Recargo Volumen" />
+                    <Column field="DescuentoANS" header="Descuento ANS" />
+                    <Column field="TotalFacturarUSD" header="Total a Facturar (USD)" />
                 </DataTable>
             </div>
         </div>
