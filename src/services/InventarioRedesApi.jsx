@@ -74,7 +74,7 @@ const getAllFacturas = async () => {
 
 //Funcion que comvierte en un objeto JSON los datos traidos de un JOIN entre las tablas de Inventario de Red y de Factuas
 const joinInventarioFactura = async () => {
-    const url = `${import.meta.env.VITE_URL_SERVICES}invred/inventariofactura/`;
+    const url = `${import.meta.env.VITE_URL_SERVICES}JoinInventarioFactura/`;
     //trycatch para manejo de errores
     try {
         const res = await fetch(url);

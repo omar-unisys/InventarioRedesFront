@@ -41,7 +41,8 @@ export const TableFacturasInventarioRedes = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await InventarioRedesApi.getAllFacturas();
+                const data = await InventarioRedesApi.joinInventarioFactura();
+                console.log("Data: ",data);
                 const formattedData = getDates(data);
                 setFacturas(getDates(data));
                 console.log("Facturas Tabla: ",getDates(data));
@@ -78,15 +79,7 @@ export const TableFacturasInventarioRedes = () => {
     
         return (data || []).map((d) => ({
             ...d,  // Mantén las propiedades originales
-            FechaSoporte: convertDate(d.FechaSoporte),
-            FechaGarantia: convertDate(d.FechaGarantia),
-            FechaEoL: convertDate(d.FechaEoL),
-            FechaIngreso: convertDate(d.FechaIngreso),
-            FechaModificacion: convertDate(d.FechaModificacion),
-            FechaInStock: convertDate(d.FechaInStock),
-            InStock: convertBooleanToYesNo(d.InStock),
-            Conectado: convertBooleanToYesNo(d.Conectado),
-            Administrable: convertBooleanToYesNo(d.Administrable)
+            FechaModificacionIngreso: convertDate(d.FechaModificacionIngreso),   
         }));
     };
     
@@ -95,35 +88,35 @@ export const TableFacturasInventarioRedes = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            Filial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idFilialPago: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Sede: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            UbicacionFisicaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            CriticidadPrevia: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Ubicacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             CriticidadActual: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             FechaModificacionIngreso: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            TipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
+            idTipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
             Modelo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Fabricante: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Marca: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DetalleServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Observaciones: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            IPEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            NroSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            ActivoInactivo: { value: null, matchMode: FilterMatchMode.EQUALS },
-            EmpresaPropietariaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            DireccionIp: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            InStock: { value: null, matchMode: FilterMatchMode.EQUALS },
+            idPropietarioFilial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             EstadisticasAtencionSitio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },        
             Pais: { value: null, matchMode: FilterMatchMode.EQUALS },
             QueSalen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            NumeroElementos: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            NumeroElementos: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             TipoCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            TipoPrecio: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            TipoPrecio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             ValorUnitarioUSD: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DisponibilidadRealCliente: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             ANSComprometido: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            ANSCumplido: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            ANSCumplido: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DescuentoRecargoVolumen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            DescuentoANS:{ value: null, matchMode: FilterMatchMode.DATE_IS },
+            DescuentoANS:{ value: null, matchMode: FilterMatchMode.STARTS_WITH },
             TotalFacturarUSD: { value: null, matchMode: FilterMatchMode.EQUALS }
             
         });
@@ -146,13 +139,13 @@ export const TableFacturasInventarioRedes = () => {
 
     //Template que devuelve la FechaSoporte con formato 
     const FechaModificacionIngresoBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaSoporte);
+        return formatDate(rowData.FechaModificacionIngreso);
     };
 
    
     //Template que devuelve la FechaModificación con formato 
     const FechaModificacionBodyTemplate = (rowData) => {
-        return formatDate(rowData.FechaModificacion);
+        return formatDate(rowData.FechaModificacionIngreso);
     };
   
 
@@ -325,9 +318,6 @@ const handleFilter = (e) => {
         <div className="gap-2 align-items-center justify-content-between buttonStyles">
             {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
             {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
-            {createButton("Nuevo", "pi pi-file-plus", RedirectCreateNewForm, 'btn btn-primary')}
-            {createButton("Reemplazar", "pi pi-sync", handleFormReemplazar, "btn btn-warning", !SelectedData || SelectedData.length === 0)}
-            {createButton("Modificar", "pi pi-file-edit", handleFormTask, 'btn btn-primary', !SelectedData || SelectedData.length === 0)}
         </div>
     );
 
@@ -406,6 +396,7 @@ const handleFilter = (e) => {
         <div>
             <Toast ref={toast} />
             <div className="card">
+            <h4 className='titleCenter'> Facturación Inventario de Redes</h4>
                 <DataTable
                     value={facturas}
                     paginator
@@ -413,7 +404,7 @@ const handleFilter = (e) => {
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]}
-                    dataKey="NroSerial" // Ajusta esto si es necesario
+                    dataKey="idSerial" 
                     selectionMode="single"
                     selection={SelectedData}
                     onSelectionChange={(e) => setSelectedData(e.value ? e.value : null)}
@@ -433,11 +424,11 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    <Column field="Filial" header="Filial" />
-                    <Column field="Sede" header="Sede" />
-                    <Column field="UbicacionFisicaEquipo" header="Ubicación Física" />
-                    <Column field="CriticidadPrevia" header="Criticidad Previa" />
-                    <Column field="CriticidadActual" header="Criticidad Actual" />
+                    <Column field="idFilialPago" header="Filial"  filter="true"/>
+                    <Column field="Sede" header="Sede" filter="true" />
+                    <Column field="Ubicacion" header="Ubicación Física" filter="true" />
+                    <Column field="idCriticidad" header="Criticidad Previa" filter="true"/>
+                    <Column field="CriticidadActual" header="Criticidad Actual" filter="true"/>
                     <Column 
                         field="FechaModificacionIngreso" 
                         header="Fecha Modificación" 
@@ -446,30 +437,31 @@ const handleFilter = (e) => {
                         filterElement={fechaModificacionIngresoFilterTemplate} // Usar el filtro de fecha
                         body={FechaModificacionIngresoBodyTemplate} // Usar el template para formato
                     />
-                    <Column field="TipoEquipo" header="Tipo de Equipo" />
-                    <Column field="Modelo" header="Modelo" />
-                    <Column field="Fabricante" header="Fabricante" />
-                    <Column field="TipoRed" header="Tipo de Red" />
-                    <Column field="DetalleServicio" header="Detalle Servicio" />
-                    <Column field="Observaciones" header="Observaciones" />
-                    <Column field="NombreEquipo" header="Nombre Equipo" />
-                    <Column field="IPEquipo" header="IP Equipo" />
-                    <Column field="NroSerial" header="Nro Serial" />
-                    <Column field="ActivoInactivo" header="Activo/Inactivo" />
-                    <Column field="EmpresaPropietariaEquipo" header="Empresa Propietaria" />
-                    <Column field="EstadisticasAtencionSitio" header="Estadísticas Atención Sitio" />
-                    <Column field="Pais" header="País" />
-                    <Column field="QueSalen" header="Que Salen" />
-                    <Column field="NumeroElementos" header="Número Elementos" />
-                    <Column field="TipoCriticidad" header="Tipo Criticidad" />
-                    <Column field="TipoPrecio" header="Tipo Precio" />
-                    <Column field="ValorUnitarioUSD" header="Valor Unitario (USD)" />
-                    <Column field="DisponibilidadRealCliente" header="Disponibilidad Real Cliente" />
-                    <Column field="ANSComprometido" header="ANS Comprometido" />
-                    <Column field="ANSCumplido" header="ANS Cumplido" />
-                    <Column field="DescuentoRecargoVolumen" header="Descuento Recargo Volumen" />
-                    <Column field="DescuentoANS" header="Descuento ANS" />
-                    <Column field="TotalFacturarUSD" header="Total a Facturar (USD)" />
+                    <Column field="idTipoEquipo" header="Tipo de Equipo" filter="true"/>
+                    <Column field="Modelo" header="Modelo" filter="true"/>
+                    <Column field="Marca" header="Fabricante" filter="true" />
+                    <Column field="TipoRed" header="Tipo de Red" filter="true"/>
+                    <Column field="DetalleServicio" header="Detalle Servicio" filter="true"/>
+                    <Column field="Observaciones" header="Observaciones" filter="true"/>
+                    <Column field="NombreEquipo" header="Nombre Equipo" filter="true"/>
+                    <Column field="DireccionIp" header="IP Equipo" filter="true"/>
+                    <Column field="idSerial" header="Nro Serial" filter="true"/>
+                    <Column field="InStock" header="Activo/Inactivo" filter="true" />
+
+                    <Column field="idPropietarioFilial" header="Empresa Propietaria" filter="true"/>
+                    <Column field="EstadisticasAtencionSitio" header="Estadísticas Atención Sitio" filter="true"/>
+                    <Column field="Pais" header="País" filter="true"/>
+                    <Column field="QueSalen" header="Que Salen" filter="true"/>
+                    <Column field="NumeroElementos" header="Número Elementos" filter="true"/>
+                    <Column field="TipoCriticidad" header="Tipo Criticidad" filter="true"/>
+                    <Column field="TipoPrecio" header="Tipo Precio" filter="true"/>
+                    <Column field="ValorUnitarioUSD" header="Valor Unitario (USD)" filter="true"/>
+                    <Column field="DisponibilidadRealCliente" header="Disponibilidad Real Cliente" filter="true"/>
+                    <Column field="ANSComprometido" header="ANS Comprometido" filter="true"/>
+                    <Column field="ANSCumplido" header="ANS Cumplido" filter="true"/>
+                    <Column field="DescuentoRecargoVolumen" header="Descuento Recargo Volumen" filter="true"/>
+                    <Column field="DescuentoANS" header="Descuento ANS" filter="true"/>
+                    <Column field="TotalFacturarUSD" header="Total a Facturar (USD)" filter="true"/>
                 </DataTable>
             </div>
         </div>
