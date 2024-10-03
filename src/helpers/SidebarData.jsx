@@ -54,8 +54,18 @@ export const SidebarData = [
         icon: <FaTable />
       },
       {
-        title: 'Registro Inventario Redes',
-        path: '/inventario/RegistroInventarioForm',
+        title: 'Tarifario',
+        path: '/inventario/Tarifario',
+        icon: <FaFileWaveform />
+      },
+      {
+        title: 'Reporte de Disponibilidad',
+        path: '/inventario/reporteDisponibilidad',
+        icon: <FaFileWaveform />
+      },
+      {
+        title: 'Linea Base Redes',
+        path: '/inventario/lineabase',
         icon: <FaFileWaveform />
       },
       {

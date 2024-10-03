@@ -6,11 +6,26 @@ import InventarioRedesApi from '../services/InventarioRedesApi';
 import { Toast } from 'primereact/toast';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
+import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
+import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
+import ExcelReader from './ExcelReader';
 
+export const TableReporteDisponibilidad = () => {
 
-
-export const TableTarifario = () => {
+    // Función para formatear fechas
+    const formatDate = (value) => {
+        if (value instanceof Date && !isNaN(value.getTime())) {
+            return value.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+        return ''; // Retorna una cadena vacía si el valor no es una fecha válida
+    };
 
    // Estado
    const [tarifas, setFacturas] = useState([]);
@@ -20,6 +35,7 @@ export const TableTarifario = () => {
    const [sortOrder, setSortOrder] = useState(null);
    const toast = useRef(null);
    const [originalData, setOriginalData] = useState([]);
+   const navigate = useNavigate();
 
     //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
@@ -52,14 +68,50 @@ export const TableTarifario = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            TipoDispositivo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Criticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Combinacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            ValorUnitario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            SLA: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            CantidadBaseContrato: { value: null, matchMode: FilterMatchMode.STARTS_WITH }  
+            Client: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Host: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Start_Date: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            End_Date: { value: null, matchMode: FilterMatchMode.DATE_IS },
+            Days: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Testname: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Availability: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Downtime: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Type: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Page: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Group: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Name_Alias: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Description_1: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Description_2: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Description_3: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
+
         });
     };
+
+    const createRowFilterTemplate = (options, itemTemplate) => (
+        <Dropdown
+            value={options.value}
+            options={enStockOptions}
+            onChange={(e) => options.filterApplyCallback(e.value)}
+            itemTemplate={itemTemplate}
+            placeholder="Seleccione"
+            className="p-column-filter"
+            style={{ minWidth: '10rem' }}
+        />
+    );
+
+    const RowFilterTemplate = (options) => (
+        <Dropdown
+            value={options.value}
+            options={criticidadOptions}
+            onChange={(e) => options.filterApplyCallback(e.value)}
+            placeholder="Seleccione"
+            className="p-column-filter"
+            style={{ minWidth: '10rem' }}
+        />
+    );
+
+    
 
 
 // Función para manejar filtros y actualizar el estado de datos filtrados
@@ -172,6 +224,12 @@ const handleFilter = (e) => {
         resetSort();   // Restablecer el orden
     };
 
+    //Redirecciona al formulario de creacion de nuevo elemento en el inventario
+    const RedirectCreateNewForm = () => {
+        navigate("/inventario/RegistroInventarioForm/", { replace: true });
+    }
+
+
 
     //Botnones de Control del Inventario en la Cabecera
     const createButton = (label, icon, onClick, className, disabled = false) => (
@@ -191,11 +249,50 @@ const handleFilter = (e) => {
         <div className="gap-2 align-items-center justify-content-between buttonStyles">
             {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
             {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
+            <ExcelReader />
         </div>
     );
 
 
+    //Ventana emergente de alerta confirmacion para editar la informacion de algun registro de la tabla 
+    const handleFormTask = useCallback(() => {
+        console.log(SelectedData);
+        Swal.fire({
+            title: "",
+            text: `¿Quiere editar la información de la factura con Serial ${SelectedData.idSerial}?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            cancelButtonText: "No",
+            confirmButtonText: "Si"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                navigate(`/inventario/updateInventarioForm/${SelectedData.idSerial}`, { replace: true });
+            }
+        });
+    }, [SelectedData, navigate]);
+
+
+
+
     const header = renderHeader();
+
+    const commonColumnProps = (header) => ({
+        filter: true,
+        filterPlaceholder: `${header}`, // Utiliza el nombre del encabezado para el placeholder
+        style: { minWidth: '7rem', textAlign: "left" }
+    });
+
+
+    const renderColumn = (field, header, extraProps = {}) => (
+        <Column
+            field={field}
+            header={header}
+            {...commonColumnProps(header)}
+            {...extraProps}
+        />
+    );
 
    
 
@@ -231,12 +328,25 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    <Column field="TipoDispositivo" header="Tipo Dispositivo"  filter="true"/>
-                    <Column field="Criticidad" header="Criticidad" filter="true" />
-                    <Column field="Combinacion" header="Combinacion" filter="true" />
-                    <Column field="ValorUnitario" header="Criticidad Previa" filter="true"/>
-                    <Column field="SLA" header="Criticidad Actual" filter="true"/>
-                    <Column field="CantidadBaseContrato" header="Tipo de Equipo" filter="true"/>
+                    <Column field="Client" header="Client"  filter="true"/>
+                    <Column field="Host" header="Host" filter="true" />
+                    <Column field="Start_Date" header="Start Date" filter="true" />
+                    <Column field="End_Date" header="End Date" filter="true"/>
+                    <Column field="Days" header="Days" filter="true"/>
+                    <Column field="Availability" header="Availability (%)" filter="true"/>
+                    <Column field="Downtime" header="Downtime (h:m:s)" filter="true"/>
+                    <Column field="Type" header="Type" filter="true"/>
+                    <Column field="Page" header="Page" filter="true"/>
+                    <Column field="Group" header="Group" filter="true"/>
+                    <Column field="Comment" header="Comment" filter="true"/>
+                    <Column field="Name_Alias" header="Name_Alias" filter="true"/>
+                    <Column field="Description_1" header="Description_1" filter="true"/>
+                    <Column field="Description_2" header="Description_2" filter="true"/>
+                    <Column field="Description_3" header="Description_3" filter="true"/>
+
+
+
+
                 </DataTable>
             </div>
         </div>

@@ -7,15 +7,23 @@ import InventarioRedesApi from '../services/InventarioRedesApi';
 
 export const ExcelReader = () => {
     const [file, setFile] = useState(null);
+    const [fileName, setFileName] = useState('No se ha seleccionado un archivo');
     const [toast, setToast] = useState(null);
     const toastRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         setToast(toastRef.current);
     }, []);
 
     const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+        const selectedFile = e.target.files[0];
+        setFile(selectedFile);
+        setFileName(selectedFile ? selectedFile.name : 'No se ha seleccionado un archivo');
+    };
+
+    const handleSelectFileClick = () => {
+        fileInputRef.current.click(); // Simula un clic en el input de archivo
     };
 
     const handleFileUpload = async () => {
@@ -168,8 +176,19 @@ export const ExcelReader = () => {
     return (
         <div>
             <Toast ref={toastRef} />
-            <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-            <Button label="Subir y Importar" onClick={handleFileUpload} />
+            <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                id="fileInput"
+                ref={fileInputRef}
+            />
+            <Button label="Seleccionar Archivo" icon="pi pi-upload" className="p-button-secondary" onClick={handleSelectFileClick} style={{ background: 'Blue', padding: '2px', marginTop: '10px' }} />
+            <span style={{ marginLeft: '10px' }}>{fileName}</span>
+            <Button label="Subir e Importar" onClick={handleFileUpload} style={{ background: 'cornflowerblue', padding: '2px', marginTop: '10px', marginLeft:'10px' }} />
         </div>
     );
 };
+
+export default ExcelReader;

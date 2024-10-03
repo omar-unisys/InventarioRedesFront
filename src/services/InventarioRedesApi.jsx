@@ -72,6 +72,15 @@ const getAllFacturas = async () => {
     return data;
 };
 
+//Funcion que comvierte en un objeto JSON los datos traidos de la tabla de Factuas
+const getTarifario = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}tarifario/`;
+    //console.log(url);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+};
+
 //Funcion que comvierte en un objeto JSON los datos traidos de un JOIN entre las tablas de Inventario de Red y de Factuas
 const joinInventarioFactura = async () => {
     const url = `${import.meta.env.VITE_URL_SERVICES}JoinInventarioFactura/`;
@@ -147,6 +156,38 @@ const deleteInventarioRedes = async (idInventarioRedes) => {
     return data;
 }
 
+const createLineaBase= async (lineaBase) =>{
+    const url = `${import.meta.env.VITE_URL_SERVICES}linebase/`;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(lineaBase),
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            // Si la respuesta HTTP no es ok, lanzar un error con el mensaje recibido del backend
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error en la solicitud de crear la Linea Base:', error);
+        throw error; // Propagar el error para manejarlo en el lugar donde se llama a la función
+    }
+}
+
+//Funcion que comvierte en un objeto JSON los datos traidos de la tabla Linea Base
+const getLineaBase = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}linebase/`;
+    //console.log(url);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+};
+
 const InventarioRedesApi = {
     createInventarioRedes,
     getAll,
@@ -154,7 +195,10 @@ const InventarioRedesApi = {
     updateInventarioRedes,
     deleteInventarioRedes,
     getAllFacturas,
-    joinInventarioFactura
+    joinInventarioFactura,
+    getTarifario, 
+    getLineaBase,
+    createLineaBase
 }
 
 export default InventarioRedesApi;

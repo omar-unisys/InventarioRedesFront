@@ -1,6 +1,8 @@
 
 .buttonStyles{
   text-align: right;
+  justify-content: flex-end; /* Alinea todos los elementos a la derecha */
+  align-items: center; /* Alinea verticalmente los elementos en el centro */
 }
 
 .clearFilterStyle{
@@ -51,3 +53,36 @@
 .p-column-filter-matchmode-dropdown{
   display: none;
 }
+.p-row-editor-init{
+  background-color: #f9fafb; /* Color de fondo del filtro */
+  border-radius: 5px; /* Borde redondeado */
+  padding: 1px; /* Relleno */
+  display: flex; /* Usa flexbox para alinear el contenido */
+  align-items: center; /* Alinea el contenido verticalmente */
+  justify-content: center; /* Alinea el contenido horizontalmente */
+} 
+
+.p-row-editor-save {
+  background-color: green; /* Color de fondo del filtro */
+  color: #f9fafb;
+  border-radius: 5px; /* Borde redondeado */
+  padding: 1px; /* Relleno */
+  display: flex; /* Usa flexbox para alinear el contenido */
+  align-items: center; /* Alinea el contenido verticalmente */
+  justify-content: center; /* Alinea el contenido horizontalmente */
+}
+
+.p-row-editor-cancel{
+  background-color: red; /* Color de fondo del filtro */
+  color: #f9fafb;
+  border-radius: 5px; /* Borde redondeado */
+  padding: 1px; /* Relleno */
+  display: flex; /* Usa flexbox para alinear el contenido */
+  align-items: center; /* Alinea el contenido verticalmente */
+  justify-content: center; /* Alinea el contenido horizontalmente */
+}
+
+.p-highlight {
+  background-color: #d1e7fd !important; /* Cambia el color de resaltado aquí */
+}
+

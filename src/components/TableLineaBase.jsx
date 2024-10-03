@@ -10,7 +10,7 @@ import { Button } from 'primereact/button';
 
 
 
-export const TableTarifario = () => {
+export const TableLineaBase = () => {
 
    // Estado
    const [tarifas, setFacturas] = useState([]);
@@ -20,12 +20,13 @@ export const TableTarifario = () => {
    const [sortOrder, setSortOrder] = useState(null);
    const toast = useRef(null);
    const [originalData, setOriginalData] = useState([]);
+   
 
     //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await InventarioRedesApi.getTarifario();
+                const data = await InventarioRedesApi.getLineaBase();
                 console.log("Data: ",data);
                 const formattedData = data;
                 setFacturas(data);
@@ -52,12 +53,10 @@ export const TableTarifario = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            TipoDispositivo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Filial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Dispositivo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Criticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Combinacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            ValorUnitario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            SLA: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            CantidadBaseContrato: { value: null, matchMode: FilterMatchMode.STARTS_WITH }  
+            Cantidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
         });
     };
 
@@ -203,7 +202,7 @@ const handleFilter = (e) => {
         <div>
             <Toast ref={toast} />
             <div className="card">
-            <h4 className='titleCenter'> Tarifario Inventario de Redes</h4>
+            <h4 className='titleCenter'> Línea Base Inventario de Redes</h4>
                 <DataTable
                     value={tarifas}
                     paginator
@@ -231,12 +230,10 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    <Column field="TipoDispositivo" header="Tipo Dispositivo"  filter="true"/>
+                    <Column field="Filial" header="Filial"  filter="true"/>
+                    <Column field="Dispositivo" header="Dispositivo" filter="true" />
                     <Column field="Criticidad" header="Criticidad" filter="true" />
-                    <Column field="Combinacion" header="Combinacion" filter="true" />
-                    <Column field="ValorUnitario" header="Criticidad Previa" filter="true"/>
-                    <Column field="SLA" header="Criticidad Actual" filter="true"/>
-                    <Column field="CantidadBaseContrato" header="Tipo de Equipo" filter="true"/>
+                    <Column field="Cantidad" header="Cantidad" filter="true"/>
                 </DataTable>
             </div>
         </div>

@@ -13,7 +13,10 @@ import { TableInventarioRedes } from  './components/TableInventarioRedes';
 import { TableFacturasInventarioRedes } from  './components/TableFacturasInventarioRedes';  
 import { RegistroInventarioForm } from './components/RegistroInventarioForm';
 import { UpdateInventarioForm } from './components/UpdateInventarioForm'; 
+import { TableTarifario } from './components/TableTarifario'; 
+import { TableReporteDisponibilidad } from './components/TableReporteDisponibilidad'; 
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
+import { TableLineaBase } from './components/TableLineaBase'; 
 import { ExcelReader } from './components/ExcelReader'; 
 
 
@@ -72,7 +75,9 @@ function App() {
           <Route path="/admin/aplicaciones" element={<AdminPage/>} />
           <Route path="/inventario/inventarioRedes/" element={<TableInventarioRedes/>} />
           <Route path="/inventario/facturasInventarioRedes/" element={<TableFacturasInventarioRedes/>} />
-          <Route path="/inventario/RegistroInventarioForm/" element={<RegistroInventarioForm/>} />
+          <Route path="/inventario/Tarifario/" element={<TableTarifario/>} />
+          <Route path="/inventario/reporteDisponibilidad/" element={<TableReporteDisponibilidad/>} />
+          <Route path="/inventario/lineabase/" element={<TableLineaBase/>} />
           <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
           <Route path="/inventario/ExcelReader/" element={<ExcelReader/>} />
