@@ -86,7 +86,6 @@ export const TableInventarioRedes = () => {
             FechaModificacion: convertDate(d.FechaModificacion),
             FechaInStock: convertDate(d.FechaInStock),
             InStock: convertBooleanToYesNo(d.InStock),
-            Conectado: convertBooleanToYesNo(d.Conectado),
             Administrable: convertBooleanToYesNo(d.Administrable)
         }));
     };
@@ -96,9 +95,14 @@ export const TableInventarioRedes = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+            idPropietarioFilial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idFilial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idFilialPago:{ value: null, matchMode: FilterMatchMode.STARTS_WITH },
             idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+
+            Placa: { value: null, matchMode: FilterMatchMode.CONTAINS },
             idCriticidad: { value: null, matchMode: FilterMatchMode.EQUALS },
-            idTipoEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            idTipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
             Marca: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Modelo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -128,7 +132,7 @@ export const TableInventarioRedes = () => {
             FechaIngreso: { value: null, matchMode: FilterMatchMode.DATE_IS },
             Comentario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             FechaModificacion:{ value: null, matchMode: FilterMatchMode.DATE_IS },
-            Conectado: { value: null, matchMode: FilterMatchMode.EQUALS }
+            idEstado:{ value: null, matchMode: FilterMatchMode.EQUALS }
             
         });
     };
@@ -181,13 +185,13 @@ export const TableInventarioRedes = () => {
   
 
 
-    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
+    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable 
     const enStockOptions = [
         { label: 'Sí', value: 'Si' },
         { label: 'No', value: 'No' }
     ];
 
-    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable y Conectado
+    //Se cargan los datos a una matriz con Si o No. Reutilizado para Stok, Administrable 
     const criticidadOptions = [
         { label: 'Baja', value: 'Baja' },
         { label: 'Media', value: 'Media' },
@@ -220,7 +224,6 @@ export const TableInventarioRedes = () => {
     );
 
     const enStockRowFilterTemplate = (options) => createRowFilterTemplate(options, enStockItemTemplate);
-    const conectadoRowFilterTemplate = (options) => createRowFilterTemplate(options, conectadoItemTemplate);
     const administrableRowFilterTemplate = (options) => createRowFilterTemplate(options, administrableItemTemplate);
     const criticidadRowFilterTemplate = (options) => RowFilterTemplate(options);
 
@@ -229,17 +232,12 @@ export const TableInventarioRedes = () => {
         return <Tag value={option.label} severity={getSeverity(option.value)} />;
     };
 
-    //Determinar el color de las opciones Si o No de Conectado
-    const conectadoItemTemplate = (option) => {
-        return <Tag value={option.label} severity={getSeverity(option.value)} />;
-    };
-
     //Determinar el color de las opciones (Del filtro) Si o No de InStock
     const enStockItemTemplate = (option) => {
         return <Tag value={option.label} severity={getSeverity(option.value)} />;
     };
 
-    //Retorna el color que se le va a gregar a las opciones. Reutilizado para Stok, Administrable y Conectado
+    //Retorna el color que se le va a gregar a las opciones. Reutilizado para Stok, Administrable 
     const getSeverity = (value) => {
         switch (value) {
             case 'No':
@@ -256,10 +254,6 @@ export const TableInventarioRedes = () => {
         return <Tag value={rowData.InStock} severity={getSeverity(rowData.InStock)} />;
     };
 
-    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Conectado
-    const conectadoBodyTemplate = (rowData) => {
-        return <Tag value={rowData.Conectado} severity={getSeverity(rowData.Conectado)} />;
-    };
 
     //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Administrable
     const administrableBodyTemplate = (rowData) => {
@@ -541,32 +535,18 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    {renderColumn("idSerial", "Serial", { style: { minWidth: '12rem' } })}
+                    {renderColumn("idPropietarioFilial", "Propietario Equipo")}
+                    {renderColumn("idFilial", "Filial En Uso")}
+                    {renderColumn("idFilialPago", "Empresa Pago")}
                     {renderColumn("Marca", "Marca")}
                     {renderColumn("Modelo", "Modelo")}
+                    {renderColumn("idSerial", "Serial", { style: { minWidth: '12rem' } })}
+                    {renderColumn("Placa", "Placa")}              
                     {renderColumn("NombreEquipo", "Nombre Equipo")}
                     {renderColumn("DireccionIp", "Dirección Ip")}
-                    <Column field="InStock" header="En Stock" filter {...customColumnProps.enStock} />
-                    <Column
-                        field="FechaInStock"
-                        header="Fecha Activo"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaInStockBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    <Column
-                        field="FechaIngreso"
-                        header="Fecha de Ingreso"
-                        sortable
-                        filter
-                        filterElement={fechaSoporteFilterTemplate}
-                        body={FechaIngresoBodyTemplate}
-                        style={{ minWidth: '10rem' }}
-                    />
-                    <Column field="idCriticidad" header="Criticidad" filter {...customColumnProps.criticidad} />
+                    {renderColumn("idTipoEquipo", "Tipo Equipo")}
                     {renderColumn("TipoRed", "Tipo de Red")}
+                    <Column field="idCriticidad" header="Criticidad" filter {...customColumnProps.criticidad} />
                     {renderColumn("Pais", "País")}
                     {renderColumn("Sede", "Sede")}
                     {renderColumn("Edificio", "Edificio")}
@@ -577,7 +557,7 @@ const handleFilter = (e) => {
                     <Column field="Administrable" header="Administrable" filter {...customColumnProps.administrable} />
                     <Column
                         field="FechaSoporte"
-                        header="Fecha Soporte"
+                        header="Fecha Vencimiento Soporte"
                         sortable
                         filter
                         filterElement={fechaSoporteFilterTemplate}
@@ -585,9 +565,10 @@ const handleFilter = (e) => {
                         style={{ minWidth: '10rem' }}
                     />
                     {renderColumn("SoporteDetalle", "Detalle Soporte")}
+
                     <Column
                         field="FechaGarantia"
-                        header="Fecha Garantía"
+                        header="Fecha Vencimiento Garantía"
                         sortable
                         filter
                         filterElement={fechaSoporteFilterTemplate}
@@ -595,9 +576,10 @@ const handleFilter = (e) => {
                         style={{ minWidth: '10rem' }}
                     />
                     {renderColumn("GarantiaDetalle", "Detalle Garantía")}
+
                     <Column
                         field="FechaEoL"
-                        header="Fecha EoL"
+                        header="EoL"
                         sortable
                         filter
                         filterElement={fechaSoporteFilterTemplate}
@@ -607,7 +589,21 @@ const handleFilter = (e) => {
                     {renderColumn("EolDetalle", "Detalle EoL")}
                     {renderColumn("VrsFirmware", "Versión Firmware")}
                     {renderColumn("NumPuertos", "Número de Puertos")}
+                    {renderColumn("idEstado", "Estado")}
+                    {renderColumn("Comentario", "Comentario")}
+
+                   
                     <Column
+                        field="FechaIngreso"
+                        header="Fecha de Ingreso"
+                        sortable
+                        filter
+                        filterElement={fechaSoporteFilterTemplate}
+                        body={FechaIngresoBodyTemplate}
+                        style={{ minWidth: '10rem' }}
+                    />
+
+<Column
                         field="FechaModificacion"
                         header="Fecha de Modificación"
                         sortable
@@ -616,7 +612,19 @@ const handleFilter = (e) => {
                         body={FechaModificacionBodyTemplate}
                         style={{ minWidth: '10rem' }}
                     />
-                    {renderColumn("Comentario", "Comentario")}
+                     <Column field="InStock" header="En Stock" filter {...customColumnProps.enStock} />
+                    <Column
+                        field="FechaInStock"
+                        header="Fecha Activo"
+                        sortable
+                        filter
+                        filterElement={fechaSoporteFilterTemplate}
+                        body={FechaInStockBodyTemplate}
+                        style={{ minWidth: '10rem' }}
+                    />
+   
+                   
+                    
                 </DataTable>
             </div>
         </div>

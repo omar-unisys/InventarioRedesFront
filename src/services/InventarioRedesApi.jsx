@@ -13,7 +13,6 @@ const updateInventarioRedes = async (idInventarioRedes, inventario) => {
 
     // Convertir valores booleanos a enteros (0 o 1)
     inventario.Administrable = inventario.Administrable ? 1 : 0;
-    inventario.Conectado = inventario.Conectado ? 1 : 0;
     inventario.InStock = inventario.InStock ? 1 : 0;
 
     // Función auxiliar para convertir a ISO solo si hay un valor válido
@@ -108,7 +107,6 @@ const createInventarioRedes = async (inventario) => {
     
     // Convertir valores booleanos a enteros (0 o 1)
     inventario.Administrable = inventario.Administrable ? 1 : 0;
-    inventario.Conectado = inventario.Conectado ? 1 : 0;
     inventario.InStock = inventario.InStock ? 1 : 0;
 
     // Función auxiliar para convertir a ISO solo si hay un valor válido
@@ -188,6 +186,43 @@ const getLineaBase = async () => {
     return data;
 };
 
+//Funcion que comvierte en un objeto JSON los datos traidos de la tabla Linea Base
+const getDisponibilidad = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}reportedisponibilidad/`;
+    //console.log(url);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+};
+
+const getSumCantidadByDevices = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}getSumCantidadByDevices/`;
+    //console.log(url);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+};
+
+const actualizarValorUnitario = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}actualizar-valor-unitario/`;
+    try {
+        const res = await fetch(url, {
+            method: 'PUT',
+        });
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error('Error al actualizar el valor unitario:', error);
+        throw error; // Propagar el error para manejarlo más arriba en la llamada
+    }
+};
+
+
+
+
 const InventarioRedesApi = {
     createInventarioRedes,
     getAll,
@@ -198,7 +233,10 @@ const InventarioRedesApi = {
     joinInventarioFactura,
     getTarifario, 
     getLineaBase,
-    createLineaBase
+    createLineaBase,
+    getDisponibilidad,
+    getSumCantidadByDevices,
+    actualizarValorUnitario
 }
 
 export default InventarioRedesApi;

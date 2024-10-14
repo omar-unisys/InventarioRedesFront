@@ -62,6 +62,10 @@ export const TableFacturasInventarioRedes = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Llamada para actualizar los valores de ValorUnitarioUSD si es necesario
+                await InventarioRedesApi.actualizarValorUnitario();
+                
+                // Luego recuperamos los datos actualizados
                 const data = await InventarioRedesApi.joinInventarioFactura();
                 console.log("Data: ", data);
                 const formattedData = getDates(data);
@@ -75,8 +79,8 @@ export const TableFacturasInventarioRedes = () => {
             }
         };
         fetchData();
-
-    }, []);
+    }, []); // Este useEffect se ejecutará cada vez que se actualice la pestaña
+    
 
     const resetSort = () => {
         setSortField(null);   // Restablecer el campo de ordenamiento
@@ -149,23 +153,23 @@ export const TableFacturasInventarioRedes = () => {
     const initFilters = () => {
         setFilters({
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            idFilialPago: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Filial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Sede: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Ubicacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            idCriticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            UbicacionFisicaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            CriticidadPrevia: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             CriticidadActual: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             FechaModificacionIngreso: { value: null, matchMode: FilterMatchMode.DATE_IS },
-            idTipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
+            TipoEquipo: { value: null, matchMode: FilterMatchMode.EQUALS },
             Modelo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Marca: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            Fabricante: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DetalleServicio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Observaciones: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            DireccionIp: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            idSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            InStock: { value: null, matchMode: FilterMatchMode.EQUALS },
-            idPropietarioFilial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            IPEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            NroSerial: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ActivoInactivo: { value: null, matchMode: FilterMatchMode.EQUALS },
+            EmpresaPropietariaEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             EstadisticasAtencionSitio: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Pais: { value: null, matchMode: FilterMatchMode.EQUALS },
             QueSalen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -179,7 +183,6 @@ export const TableFacturasInventarioRedes = () => {
             DescuentoRecargoVolumen: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DescuentoANS: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             TotalFacturarUSD: { value: null, matchMode: FilterMatchMode.EQUALS }
-
         });
     };
 
@@ -383,7 +386,7 @@ export const TableFacturasInventarioRedes = () => {
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]}
-                    dataKey="idSerial"
+                    dataKey="NroSerial"
 
                     emptyMessage="No se encontró ningún registro"
                     editMode="row"
@@ -405,10 +408,10 @@ export const TableFacturasInventarioRedes = () => {
                     rowClassName={rowClassName}
                 >
                     <Column rowEditor headerStyle={{ width: '10rem' }} bodyStyle={{ textAlign: 'center' }} frozen={true} />
-                    <Column field="idFilialPago" header="Filial" filter="true" />
+                    <Column field="Filial" header="Filial" filter="true" />
                     <Column field="Sede" header="Sede" filter="true" />
-                    <Column field="Ubicacion" header="Ubicación Física" filter="true" />
-                    <Column field="idCriticidad" header="Criticidad Previa" filter="true" />
+                    <Column field="UbicacionFisicaEquipo" header="Ubicación Física" filter="true" />
+                    <Column field="CriticidadPrevia" header="Criticidad Previa" filter="true" />
                     <Column field="CriticidadActual" header="Criticidad Actual" filter="true" editor={(options) => criticidadEditor(options)} />
 
                     <Column
@@ -419,18 +422,18 @@ export const TableFacturasInventarioRedes = () => {
                         filterElement={fechaModificacionIngresoFilterTemplate} // Usar el filtro de fecha
                         body={FechaModificacionIngresoBodyTemplate} // Usar el template para formato
                     />
-                    <Column field="idTipoEquipo" header="Tipo de Equipo" filter="true" />
+                    <Column field="TipoEquipo" header="Tipo de Equipo" filter="true" />
                     <Column field="Modelo" header="Modelo" filter="true" />
-                    <Column field="Marca" header="Fabricante" filter="true" />
+                    <Column field="Fabricante" header="Fabricante" filter="true" />
                     <Column field="TipoRed" header="Tipo de Red" filter="true" />
                     <Column field="DetalleServicio" header="Detalle Servicio" filter="true" />
                     <Column field="Observaciones" header="Observaciones" filter="true" />
                     <Column field="NombreEquipo" header="Nombre Equipo" filter="true" />
-                    <Column field="DireccionIp" header="IP Equipo" filter="true" />
-                    <Column field="idSerial" header="Nro Serial" filter="true" />
-                    <Column field="InStock" header="Activo/Inactivo" filter="true" />
+                    <Column field="IPEquipo" header="IP Equipo" filter="true" />
+                    <Column field="NroSerial" header="Nro Serial" filter="true" />
+                    <Column field="ActivoInactivo" header="Activo/Inactivo" filter="true" />
 
-                    <Column field="idPropietarioFilial" header="Empresa Propietaria" filter="true" />
+                    <Column field="EmpresaPropietariaEquipo" header="Empresa Propietaria" filter="true" />
                     <Column
                         field="EstadisticasAtencionSitio"
                         header="Estadísticas Atención Sitio"
@@ -463,7 +466,7 @@ export const TableFacturasInventarioRedes = () => {
 
                     <Column field="ANSComprometido" header="ANS Comprometido" filter="true" />
                     <Column field="ANSCumplido" header="ANS Cumplido" filter="true" />
-                    <Column field="DescuentoRecargoVolumen" header="Descuento Recargo Volumen" filter="true" />
+                    <Column field="DescuentoRecargoVolumen" header="Descuento/recargo por volumen" filter="true" />
                     <Column field="DescuentoANS" header="Descuento ANS" filter="true" />
                     <Column field="TotalFacturarUSD" header="Total a Facturar (USD)" filter="true" />
 

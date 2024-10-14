@@ -166,10 +166,18 @@ const handleFilter = (e) => {
     };
 
     //Se quitan los filtos de la tabla
-    const clearFilter = () => {
+    const clearFilter = async () => {
         initFilters(); // Limpiar los filtros
         resetSort();   // Restablecer el orden
+    
+        try {
+            const data1 = await InventarioRedesApi.getSumCantidadByDevices();
+            console.log("Suma Routers: ", data1);
+        } catch (error) {
+            console.error("Error al obtener la suma de routers: ", error);
+        }
     };
+    
 
 
     //Botnones de Control del Inventario en la Cabecera

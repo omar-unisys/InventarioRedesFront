@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import ExcelReader from './ExcelReader';
+
+
 
 export const TableReporteDisponibilidad = () => {
 
@@ -28,7 +29,7 @@ export const TableReporteDisponibilidad = () => {
     };
 
    // Estado
-   const [tarifas, setFacturas] = useState([]);
+   const [disponibilidad, setFacturas] = useState([]);
    const [SelectedData, setSelectedData] = useState([]);
    const [filters, setFilters] = useState({});
    const [sortField, setSortField] = useState(null);
@@ -41,7 +42,7 @@ export const TableReporteDisponibilidad = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await InventarioRedesApi.getTarifario();
+                const data = await InventarioRedesApi.getDisponibilidad();
                 console.log("Data: ",data);
                 const formattedData = data;
                 setFacturas(data);
@@ -181,7 +182,7 @@ const handleFilter = (e) => {
     const exportExcel = () => {
         import('xlsx').then((xlsx) => {
             // Aplicar filtros a los datos
-            const filteredData = applyFilters(tarifas, filters);
+            const filteredData = applyFilters(disponibilidad, filters);
 
             // Verificar si hay datos filtrados antes de exportar
             if (filteredData.length === 0) {
@@ -198,7 +199,7 @@ const handleFilter = (e) => {
             });
 
             // Guardar el archivo Excel
-            saveAsExcelFile(excelBuffer, 'tarifas');
+            saveAsExcelFile(excelBuffer, 'disponibilidad');
         });
     };
 
@@ -249,9 +250,12 @@ const handleFilter = (e) => {
         <div className="gap-2 align-items-center justify-content-between buttonStyles">
             {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
             {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
-            <ExcelReader />
+            
+            {/* Formulario para cargar archivo */}
+            
         </div>
     );
+    
 
 
     //Ventana emergente de alerta confirmacion para editar la informacion de algun registro de la tabla 
@@ -300,9 +304,9 @@ const handleFilter = (e) => {
         <div>
             <Toast ref={toast} />
             <div className="card">
-            <h4 className='titleCenter'> Tarifario Inventario de Redes</h4>
+            <h4 className='titleCenter'> Reporte de Disponibilidad Inventario de Redes</h4>
                 <DataTable
-                    value={tarifas}
+                    value={disponibilidad}
                     paginator
                     header={header}
                     rows={10}

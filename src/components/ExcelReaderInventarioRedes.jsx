@@ -5,7 +5,7 @@ import { Toast } from 'primereact/toast';
 import { format, parse, isValid } from 'date-fns';
 import InventarioRedesApi from '../services/InventarioRedesApi';
 
-export const ExcelReader = () => {
+export const ExcelReaderInventarioRedes = () => {
     const [file, setFile] = useState(null);
     const [fileName, setFileName] = useState('No se ha seleccionado un archivo');
     const [toast, setToast] = useState(null);
@@ -41,7 +41,8 @@ export const ExcelReader = () => {
             const worksheet = workbook.Sheets[sheetName];
 
             const startRow = 9;  // Fila 10 en 0-indexado
-            const endRow = 12;   // Fila 13 en 0-indexado
+            const endRow = 1606;   // Fila 13 en 0-indexado
+
             const range = XLSX.utils.decode_range(worksheet['!ref']);
             
             const headers = XLSX.utils.sheet_to_json(worksheet, {
@@ -54,33 +55,46 @@ export const ExcelReader = () => {
                 range: { s: { r: startRow, c: 0 }, e: { r: endRow, c: range.e.c } }
             });
 
-            const convertDate = (date) => {
-                // Verifica si la fecha es inválida o está vacía
-                if (!date || date === "" || date === "N/A" || (typeof date === 'string' && isNaN(Date.parse(date)))) {
-                    return ""; // Retorna una cadena vacía en lugar de null
+            const convertDate = (date) => { 
+                // Verifica si la fecha es inválida, está vacía, o es uno de los textos especiales
+                const invalidTexts = ["N/A", "Sin Soporte", "Sin Garantía", "Sin Fecha"];
+                
+                if (!date || date === "" || invalidTexts.includes(date) || (typeof date === 'string' && isNaN(Date.parse(date)))) {
+                    return ""; // Retorna una cadena vacía si el valor no es una fecha válida
                 }
             
                 let parsedDate;
             
-                // Maneja el caso en que date es un número (representación de fecha en Excel)
                 if (typeof date === 'number') {
+                    // Fecha en formato numérico de Excel
                     parsedDate = XLSX.SSF.parse_date_code(date);
-                    if (!parsedDate) return ""; // Retorna una cadena vacía si no se puede parsear la fecha
+                    if (!parsedDate) return ""; 
                     parsedDate = new Date(parsedDate.y, parsedDate.m - 1, parsedDate.d);
                 } else {
-                    // Maneja el caso en que date es una cadena de texto
-                    parsedDate = parse(date, 'M/d/yyyy', new Date());
+                    // Trata de convertir diferentes formatos de cadena
+                    try {
+                        parsedDate = parse(date, 'yyyy-MM-dd', new Date());
+                    } catch (error) {
+                        try {
+                            parsedDate = parse(date, 'MM/dd/yyyy', new Date());
+                        } catch (error) {
+                            return ""; // Retorna cadena vacía si el formato no es válido
+                        }
+                    }
                 }
             
-                // Retorna la fecha en formato 'yyyy-MM-dd' si es válida, de lo contrario retorna una cadena vacía
                 return isValid(parsedDate) ? format(parsedDate, 'yyyy-MM-dd') : "";
             };
+            
+            
 
             const convertYesNo = (value) => {
-                if (value === "SI" || value === "Si" || value === "sí") return 1;
-                if (value === "NO" || value === "No" || value === "no") return 0;
+                const lowerValue = value.toLowerCase();
+                if (lowerValue === "si" || lowerValue === "sí") return 1;
+                if (lowerValue === "no") return 0;
                 return null;
             };
+            
 
             // Función para convertir valores de criticidad
             const convertCriticidad = (value) => {
@@ -92,7 +106,8 @@ export const ExcelReader = () => {
                     "Bajo": "Baja",
                     "Medio": "Media",
                     "Alto": "Alta",
-                    "Muy Alto": "Muy Alta"
+                    "Muy Alto": "Muy Alta",
+                    "Muy alta": "Muy Alta",
                 };
                 return mapping[value] || null;
             };
@@ -129,7 +144,8 @@ export const ExcelReader = () => {
                 'FechaIngreso': 'FechaIngreso',
                 'Comentario': 'Comentario',
                 'Conectado': 'Conectado',
-                'InStock': 'InStock'
+                'InStock': 'InStock',
+                'Placa': 'Placa'
             };
 
             const currentDate = format(new Date(), 'yyyy-MM-dd');
@@ -138,14 +154,21 @@ export const ExcelReader = () => {
                 const transformedRow = {};
                 for (const [header, field] of Object.entries(fieldMapping)) {
                     if (row[header] !== undefined) {
+                        let value = row[header];
+            
+                        // Remover saltos de línea si el valor es una cadena
+                        if (typeof value === 'string') {
+                            value = value.replace(/(\r\n|\n|\r)/gm, ""); // Elimina saltos de línea
+                        }
+            
                         if (field.includes('Fecha')) {
-                            transformedRow[field] = convertDate(row[header]) || "";
+                            transformedRow[field] = convertDate(value) || "0000-00-00"; // Ejemplo si no se permite null
                         } else if (field === 'Administrable') {
-                            transformedRow[field] = convertYesNo(row[header]) || "";
+                            transformedRow[field] = convertYesNo(value) || 0; // Retorna 0 si no hay valor
                         } else if (field === 'idCriticidad') {
-                            transformedRow[field] = convertCriticidad(row[header]) || "";
+                            transformedRow[field] = convertCriticidad(value) || "";
                         } else {
-                            transformedRow[field] = row[header] || "";
+                            transformedRow[field] = value || null; // Asigna null si no hay valor
                         }
                     } else {
                         // Asignar un valor predeterminado de "" para columnas faltantes
@@ -155,19 +178,29 @@ export const ExcelReader = () => {
                 transformedRow['FechaModificacion'] = currentDate;
                 return transformedRow;
             });
+            
 
             console.log('Mapped Data:', mappedData);
 
             try {
-                for (const item of mappedData) {
-                    await InventarioRedesApi.createInventarioRedes(item);
+                const batchSize = 100; // Cambia este valor según sea necesario
+                for (let i = 0; i < mappedData.length; i += batchSize) {
+                    const batch = mappedData.slice(i, i + batchSize);
+                    await Promise.all(batch.map(async (item, index) => {
+                        try {
+                            await InventarioRedesApi.createInventarioRedes(item);
+                        } catch (err) {
+                            console.error(`Error al procesar la fila ${i + index + 1}:`, err);
+                            toast.show({ severity: 'error', summary: 'Error', detail: `Error en la fila ${i + index + 1}: ${err.message}` });
+                        }
+                    }));
                 }
-
                 toast.show({ severity: 'success', summary: 'Éxito', detail: 'Datos importados correctamente' });
             } catch (error) {
                 toast.show({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al importar los datos.' });
                 console.error('Error al importar los datos:', error);
             }
+            
         };
 
         reader.readAsArrayBuffer(file);
@@ -191,4 +224,4 @@ export const ExcelReader = () => {
     );
 };
 
-export default ExcelReader;
+export default ExcelReaderInventarioRedes;

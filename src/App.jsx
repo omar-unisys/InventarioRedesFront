@@ -17,7 +17,7 @@ import { TableTarifario } from './components/TableTarifario';
 import { TableReporteDisponibilidad } from './components/TableReporteDisponibilidad'; 
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
 import { TableLineaBase } from './components/TableLineaBase'; 
-import { ExcelReader } from './components/ExcelReader'; 
+import { ExcelReaderInventarioRedes } from './components/ExcelReaderInventarioRedes'; 
 
 
 function App() {
@@ -80,7 +80,7 @@ function App() {
           <Route path="/inventario/lineabase/" element={<TableLineaBase/>} />
           <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
-          <Route path="/inventario/ExcelReader/" element={<ExcelReader/>} />
+          <Route path="/inventario/ExcelReaderInventarioRedes/" element={<ExcelReaderInventarioRedes/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
       </AuthProvider>

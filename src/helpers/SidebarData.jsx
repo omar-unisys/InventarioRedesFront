@@ -70,7 +70,7 @@ export const SidebarData = [
       },
       {
         title: 'Importar de Excel Inventario Redes',
-        path: '/inventario/ExcelReader',
+        path: '/inventario/ExcelReaderInventarioRedes',
         icon: <FaFileWaveform />
       }
     ]
