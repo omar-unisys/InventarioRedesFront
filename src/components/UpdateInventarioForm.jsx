@@ -49,7 +49,6 @@ export const UpdateInventarioForm = () => {
         FechaIngreso: new Date(),
         FechaModificacion: new Date(),
         Comentario: '',
-        Conectado: false,
         InStock: false,
         idModified: false,
         idSerialAnterior: "",
@@ -171,7 +170,6 @@ useEffect(() => {
     
                 // Actualiza los valores booleanos
                 data.Administrable = toBoolean(data.Administrable);
-                data.Conectado = toBoolean(data.Conectado);
                 data.InStock = toBoolean(data.InStock);
     
                 // Verifica qué campos están siendo establecidos
@@ -348,15 +346,7 @@ useEffect(() => {
                                         </div>
 
                                     </Col>
-                                    <Col sm>
-                                        <div className="flex align-items-center">
-                                            <Checkbox inputId="chConectado" name="Conectado" value="Conectado"
-                                                onChange={e => setInventario({ ...inventario, Conectado: e.checked })}
-                                                checked={inventario.Conectado || false}>
-                                            </Checkbox>
-                                            <label htmlFor="chConectado" className="ml-2">Conectado</label>
-                                        </div>
-                                    </Col>
+                                    
                                     <Col sm>
                                         <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"

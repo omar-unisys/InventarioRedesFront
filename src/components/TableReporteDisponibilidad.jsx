@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
+import axios from 'axios';
 
 
 
@@ -246,15 +247,42 @@ const handleFilter = (e) => {
         />
     );
 
-    const renderHeader = () => (
-        <div className="gap-2 align-items-center justify-content-between buttonStyles">
-            {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
-            {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
-            
-            {/* Formulario para cargar archivo */}
-            
-        </div>
-    );
+    const renderHeader = () => {
+        const [selectedFile, setSelectedFile] = useState(null);
+    
+        // Manejar el cambio de archivo en el input
+        const handleFileChange = (e) => {
+            setSelectedFile(e.target.files[0]);
+        };
+    
+        // Función para manejar el envío del archivo
+        const handleUpload = async () => {
+            if (!selectedFile) {
+                alert("Por favor, selecciona un archivo primero.");
+                return;
+            }
+    
+            try {
+                console.log("Archivo: ", selectedFile);
+                const result = await InventarioRedesApi.UploadExcelDisponibilidad(selectedFile);
+                console.log('Archivo subido con éxito:', result);
+            } catch (error) {
+                console.error('Error al subir el archivo:', error);
+            }
+        };
+    
+        return (
+            <div className="gap-2 align-items-center justify-content-between buttonStyles">
+                {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
+                {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
+                
+                {/* Formulario para cargar archivo */}
+                <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .xlsb" />
+                <button onClick={handleUpload} className="btn btn-primary">Subir Archivo</button>
+            </div>
+        );
+    };
+    
     
 
 

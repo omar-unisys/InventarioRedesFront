@@ -1,3 +1,5 @@
+import { Upload } from "@mui/icons-material";
+
 const getInventarioRedesByID = async (idInventarioRedes) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/${idInventarioRedes}`;
     const res = await fetch(url);
@@ -220,6 +222,32 @@ const actualizarValorUnitario = async () => {
     }
 };
 
+const UploadExcelDisponibilidad = async (file) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}importReporteDisponibilidad/`;
+
+    // Crear una instancia de FormData
+    const formData = new FormData();
+    formData.append('file', file); // 'file' es el campo del archivo en la API
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData, // No se necesita especificar el Content-Type, fetch lo manejará automáticamente
+        });
+
+        if (!response.ok) {
+            // Si la respuesta HTTP no es ok, lanzar un error con el mensaje recibido del backend
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error en la solicitud de subir el archivo:', error);
+        throw error; // Propagar el error para manejarlo en el lugar donde se llama a la función
+    }
+};
 
 
 
@@ -236,7 +264,8 @@ const InventarioRedesApi = {
     createLineaBase,
     getDisponibilidad,
     getSumCantidadByDevices,
-    actualizarValorUnitario
+    actualizarValorUnitario,
+    UploadExcelDisponibilidad
 }
 
 export default InventarioRedesApi;

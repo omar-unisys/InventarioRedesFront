@@ -80,6 +80,7 @@ function App() {
           <Route path="/inventario/lineabase/" element={<TableLineaBase/>} />
           <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
+          <Route path="/inventario/RegistroInventarioForm" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/ExcelReaderInventarioRedes/" element={<ExcelReaderInventarioRedes/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
