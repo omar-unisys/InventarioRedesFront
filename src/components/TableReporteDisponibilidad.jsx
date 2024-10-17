@@ -340,7 +340,7 @@ const handleFilter = (e) => {
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]}
-                    dataKey="Combinacion" 
+                    dataKey="Host" 
                     selectionMode="single"
                     selection={SelectedData}
                     onSelectionChange={(e) => setSelectedData(e.value ? e.value : null)}
