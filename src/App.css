@@ -1,3 +1,13 @@
+html, body {
+  height: 100%;
+  margin: 10px;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
 
 .buttonStyles{
   text-align: right;
@@ -86,3 +96,42 @@
   background-color: #d1e7fd !important; /* Cambia el color de resaltado aquí */
 }
 
+/* Estilos para dispositivos móviles (pantallas menores a 768px) */
+@media only screen and (max-width: 768px) {
+  .buttonStyles {
+    text-align: center; /* Centra los botones en pantallas pequeñas */
+    justify-content: center; /* Cambia la alineación a centrada */
+  }
+
+  .clearFilterStyle {
+    padding: 4px; /* Reducir el padding en pantallas pequeñas */
+  }
+
+  .titleCenter {
+    font-size: 1.2rem; /* Reducir el tamaño del texto en pantallas pequeñas */
+    padding: 5px; /* Reducir el padding */
+  }
+
+  /* Ajustar el tamaño de los botones de búsqueda */
+  .search-button {
+    border-radius: 0 5px 5px 0;
+    font-size: 0.9rem;
+  }
+
+  /* Asegurar que las tablas sean responsivas */
+  table {
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* Reducir el tamaño de los íconos en dispositivos móviles */
+  .p-column-filter .pi {
+    font-size: 0.8rem;
+  }
+
+  .p-row-editor-save, .p-row-editor-cancel {
+    font-size: 0.8rem; /* Reducir el tamaño del texto */
+    padding: 0.5rem;
+  }
+}

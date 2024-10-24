@@ -7,11 +7,9 @@ import Col from 'react-bootstrap/Col';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Button from 'react-bootstrap/Button';
 import InventarioRedesApi from '../services/InventarioRedesApi';
-import getAll from '../services/InventarioRedesApi';
 import { Checkbox } from 'primereact/checkbox';
 import { useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { data } from 'jquery';
 
 export const RegistroInventarioForm = () => {
     const { idInventarioRedes } = useParams();
@@ -36,33 +34,48 @@ export const RegistroInventarioForm = () => {
         TipoServicio: '',
         DetalleServicio: '',
         Administrable: false,
-        FechaSoporte: '',
+        FechaSoporte: null,
         SoporteDetalle: '',
-        FechaGarantia: '',
+        FechaGarantia: null,
         GarantiaDetalle: '',
-        FechaEoL: '',
+        FechaEoL: null,
         EolDetalle: '',
         VrsFirmware: '',
         NumPuertos: '',
         idEstado: '',
-        FechaIngreso: '',
-        FechaModificacion: '',
+        FechaIngreso: new Date(),
+        FechaModificacion: new Date(),
         Comentario: '',
-        InStock: false,
+        InStock: true,
         hasError: false,
         cambioInStock: false,
-        FechaInStock:''
+        FechaInStock: null
     });
-
+    const [errors, setErrors] = useState({
+        DireccionIp: '',
+    });
     const [validated, setValidated] = useState(false);
     const [title, setTitle] = useState('');
     const [isDisabled, setIsDisabled] = useState(false);
 
-
     useEffect(() => {
-        InventarioRedesApi.getAll().then((data) => setInventario(data));
-        idInventarioRedes ? getInventarioRedesBy() : resetForm();
-    }, []);
+        const fetchData = async () => {
+            const data = await InventarioRedesApi.getAll();
+            setInventario(prevState => ({
+                ...prevState,
+                ...data,
+                InStock: data.InStock !== undefined ? data.InStock : true, // Asegúrate que InStock esté en true por defecto
+            }));
+            
+            if (idInventarioRedes) {
+                await getInventarioRedesBy();
+            } else {
+                resetForm();
+            }
+        };
+        fetchData();
+    }, [idInventarioRedes]);
+    
 
 
 
@@ -89,11 +102,10 @@ export const RegistroInventarioForm = () => {
     }
 
     const saveInventario = async () => {
-        const navigate = useNavigate();
-        
+
         try {
             const response = await InventarioRedesApi.createInventarioRedes(inventario);
-    
+
             if (response && response.idSerial) { // Ajusta esta condición según el campo que indica éxito en tu respuesta
                 Swal.fire({
                     title: '',
@@ -122,18 +134,111 @@ export const RegistroInventarioForm = () => {
         }
     };
 
+    const formatDate = (value) => {
+        console.log("Fecha: ", value);
+        if (!value || isNaN(new Date(value).getTime())) {
+            return ""; // Devuelve un string vacío si el valor es nulo o inválido
+        } else {
+            const date = new Date(value);
+            return date.toISOString().split('T')[0]; // Devuelve el formato yyyy-MM-dd
+        }
+    };
+
     const getInventarioRedesBy = async () => {
-        await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes).then(responseData => {
+        try {
+            const responseData = await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes);
             if (responseData.length > 0) {
-                setInventario(responseData[0]);
-                console.log(responseData[0]);
-                setTitle("Registro de horas - " + responseData[0].groupActivity);
+                const data = responseData[0];
+    
+                // Asegúrate de que todos los campos tengan valores predeterminados si no están definidos
+                setInventario({
+                    idSerial: data.idSerial || '',
+                    idFilial: data.idFilial || '',
+                    idCriticidad: data.idCriticidad || '',
+                    idTipoEquipo: data.idTipoEquipo || '',
+                    idPropietarioFilial: data.idPropietarioFilial || '',
+                    idFilialPago: data.idFilialPago || '',
+                    Marca: data.Marca || '',
+                    Modelo: data.Modelo || '',
+                    NombreEquipo: data.NombreEquipo || '',
+                    DireccionIp: data.DireccionIp || '',
+                    TipoRed: data.TipoRed || '',
+                    Pais: data.Pais || '',
+                    Sede: data.Sede || '',
+                    Edificio: data.Edificio || '',
+                    Piso: data.Piso || '',
+                    Ubicacion: data.Ubicacion || '',
+                    TipoServicio: data.TipoServicio || '',
+                    DetalleServicio: data.DetalleServicio || '',
+                    Administrable: data.Administrable ?? false, // Para booleanos
+                    FechaSoporte: data.FechaSoporte ? new Date(data.FechaSoporte) : new Date(),
+                    SoporteDetalle: data.SoporteDetalle || '',
+                    FechaGarantia: data.FechaGarantia ? new Date(data.FechaGarantia) : new Date(),
+                    GarantiaDetalle: data.GarantiaDetalle || '',
+                    FechaEoL: data.FechaEoL ? new Date(data.FechaEoL) : new Date(),
+                    EolDetalle: data.EolDetalle || '',
+                    VrsFirmware: data.VrsFirmware || '',
+                    NumPuertos: data.NumPuertos || '',
+                    idEstado: data.idEstado || '',
+                    FechaIngreso: data.FechaIngreso ? new Date(data.FechaIngreso) : new Date(),
+                    FechaModificacion: data.FechaModificacion ? new Date(data.FechaModificacion) : new Date(),
+                    Comentario: data.Comentario || '',
+                    InStock: data.InStock ?? true, // Asegúrate de que no sea undefined
+                    FechaInStock: data.FechaInStock ? new Date(data.FechaInStock) : new Date(),
+                    hasError: data.hasError ?? false, // Para cualquier otro campo booleano
+                    cambioInStock: data.cambioInStock ?? false,
+                });
+    
+                setTitle("Registro de horas - " + (data.groupActivity || 'Sin actividad'));
                 setIsDisabled(true);
             } else {
                 navigate("/inventario/RegistroInventarioForm", { replace: true });
             }
-        });
-    }
+        } catch (error) {
+            console.error('Error al obtener los datos:', error);
+        }
+    };
+    
+
+    // Expresión regular para validar IPv4
+    const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setInventario({ ...inventario, [name]: value });
+
+        // Validar Dirección IP
+        if (name === 'DireccionIp') {
+            if (!ipv4Regex.test(value)) {
+                setErrors({
+                    ...errors,
+                    DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1)',
+                });
+            } else {
+                setErrors({ ...errors, DireccionIp: '' });
+            }
+        }
+    };
+
+    const handleDateChange = (fieldName) => (e) => {
+        const inputValue = e.target.value;
+        if (inputValue) {
+            const [year, month, day] = inputValue.split('-');
+            const newDate = new Date(year, month - 1, day);
+            setInventario((prevInventario) => {
+                const updatedInventario = { ...prevInventario, [fieldName]: newDate };
+                //console.log(updatedInventario); // Agregar aquí
+                return updatedInventario;
+            });
+        } else {
+            setInventario((prevInventario) => {
+                const updatedInventario = { ...prevInventario, [fieldName]: null };
+                //console.log(updatedInventario); // Agregar aquí
+                return updatedInventario;
+            });
+        }
+    };
+
     return (
         <>
 
@@ -151,7 +256,6 @@ export const RegistroInventarioForm = () => {
                                         <FloatingLabel controlId="txtIdSerial" label="Serial" className="mb-3">
                                             <Form.Control type="text" placeholder="Serial"
                                                 name='idSerial'
-                                                defaultValue={""}
                                                 value={inventario.idSerial}
                                                 onChange={e => setInventario({ ...inventario, idSerial: e.target.value })}
                                                 required
@@ -209,13 +313,19 @@ export const RegistroInventarioForm = () => {
 
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtDireccionIp" label="Direccion Ip" className="mb-3">
-                                            <Form.Control type="text" placeholder="Direccion Ip"
+                                        <FloatingLabel controlId="txtDireccionIp" label="Dirección IP" className="mb-3">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Dirección IP"
                                                 name='DireccionIp'
                                                 value={inventario.DireccionIp || ""}
-                                                onChange={e => setInventario({ ...inventario, DireccionIp: e.target.value })}
-                                            //disabled={isDisabled} 
+                                                onChange={handleInputChange}
+                                                isInvalid={errors.DireccionIp !== ''}
                                             />
+
+                                            <Form.Control.Feedback type="invalid">
+                                                {errors.DireccionIp}
+                                            </Form.Control.Feedback>
                                         </FloatingLabel>
                                     </Col>
                                 </Row>
@@ -232,7 +342,6 @@ export const RegistroInventarioForm = () => {
                                                 name='idCriticidad'
                                                 value={inventario.idCriticidad}
                                                 onChange={e => setInventario({ ...inventario, idCriticidad: e.target.value })}
-                                                required
                                             >
                                                 <option value="">Seleccione el nivel de Criticidad</option>
                                                 <option value="Baja">Baja</option>
@@ -261,15 +370,20 @@ export const RegistroInventarioForm = () => {
                                         </div>
 
                                     </Col>
-                                    
+
                                     <Col sm>
                                         <div className="flex align-items-center">
-                                            <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock:true })}
-                                                checked={inventario.InStock || false}>
-                                            </Checkbox>
+                                            <Checkbox
+                                                inputId="chInStock"
+                                                name="InStock"
+                                                value="InStock"
+                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock: true })}
+                                                checked={inventario.InStock} // Se asegura que el valor por defecto sea true
+                                                disabled // Deshabilitar el checkbox
+                                            />
                                             <label htmlFor="chInStock" className="ml-2">En Stock</label>
                                         </div>
+
                                     </Col>
                                 </Row>
                             </Accordion.Body>
@@ -517,16 +631,11 @@ export const RegistroInventarioForm = () => {
                             <Accordion.Body>
                                 <Row>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha Vencimiento Soporte" className="mb-3">
+                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha Vencimiento de Soporte" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Soporte"
                                                 name='FechaSoporte'
-                                                value={new Date(inventario.FechaSoporte).toLocaleDateString('fr-CA', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: '2-digit',
-                                                    day: '2-digit'
-                                                })}
-                                                onChange={e => setInventario({ ...inventario, FechaSoporte: e.target.value })}
+                                                value={inventario.FechaSoporte ? formatDate(inventario.FechaSoporte) : ""}
+                                                onChange={handleDateChange('FechaSoporte')}
                                             //disabled 
                                             />
                                         </FloatingLabel>
@@ -542,19 +651,16 @@ export const RegistroInventarioForm = () => {
                                         </FloatingLabel>
                                     </Col>
                                     <Col sm>
+                                    <Col sm>
                                         <FloatingLabel controlId="txtFechaGarantia" label="Fecha Vencimiento Garantía" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Garantía"
                                                 name='FechaGarantia'
-                                                value={new Date(inventario.FechaGarantia).toLocaleDateString('fr-CA', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: '2-digit',
-                                                    day: '2-digit'
-                                                })}
-                                                onChange={e => setInventario({ ...inventario, FechaGarantia: e.target.value })}
+                                                value={inventario.FechaGarantia ? formatDate(inventario.FechaGarantia) : ""}
+                                                onChange={handleDateChange('FechaGarantia')}
                                             //disabled 
                                             />
                                         </FloatingLabel>
+                                    </Col>
                                     </Col>
                                 </Row>
                                 <Row>
@@ -569,16 +675,11 @@ export const RegistroInventarioForm = () => {
                                         </FloatingLabel>
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaEoL" label="Fecha EoL" className="mb-3">
+                                    <FloatingLabel controlId="txtFechaEoL" label="Fecha EoL" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha Eol"
                                                 name='FechaEoL'
-                                                value={new Date(inventario.FechaEoL).toLocaleDateString('fr-CA', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: '2-digit',
-                                                    day: '2-digit'
-                                                })}
-                                                onChange={e => setInventario({ ...inventario, FechaEoL: e.target.value })}
+                                                value={inventario.FechaEoL ? formatDate(inventario.FechaEoL) : ""}
+                                                onChange={handleDateChange('FechaEoL')}
                                             //disabled 
                                             />
                                         </FloatingLabel>
@@ -599,31 +700,21 @@ export const RegistroInventarioForm = () => {
 
 
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaIngreso" label="Fecha de Ingreso" className="mb-3">
+                                    <FloatingLabel controlId="txtFechaIngreso" label="Fecha de Ingreso" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Ingreso"
                                                 name='FechaIngreso'
-                                                value={new Date(inventario.FechaIngreso).toLocaleDateString('fr-CA', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: '2-digit',
-                                                    day: '2-digit'
-                                                })}
-                                                onChange={e => setInventario({ ...inventario, FechaIngreso: e.target.value })}
+                                                value={inventario.FechaIngreso ? formatDate(inventario.FechaIngreso) : ""}
+                                                onChange={handleDateChange('FechaIngreso')}
                                             //disabled 
                                             />
                                         </FloatingLabel>
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaModificacion" label="Fecha de Modificación" className="mb-3">
+                                    <FloatingLabel controlId="txtFechaModificacion" label="Fecha de Modificación" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Modificación"
                                                 name='FechaModificacion'
-                                                value={new Date(inventario.FechaModificacion).toLocaleDateString('fr-CA', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: '2-digit',
-                                                    day: '2-digit'
-                                                })}
-                                                onChange={e => setInventario({ ...inventario, FechaModificacion: e.target.value })}
+                                                value={inventario.FechaModificacion ? formatDate(inventario.FechaModificacion) : ""}
+                                                onChange={handleDateChange('FechaModificacion')}
                                                 disabled={true}
                                             />
                                         </FloatingLabel>

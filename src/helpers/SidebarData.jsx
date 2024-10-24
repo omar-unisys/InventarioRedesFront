@@ -60,7 +60,7 @@ export const SidebarData = [
       },
       {
         title: 'Reporte de Disponibilidad',
-        path: '/inventario/reporteDisponibilidad',
+        path: '/inventario/SeleccionarMes',
         icon: <FaFileWaveform />
       },
       {

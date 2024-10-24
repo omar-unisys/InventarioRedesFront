@@ -55,17 +55,13 @@ export const UpdateInventarioForm = () => {
         cambioInStock: false,
         FechaInStock:new Date()
     });
-
+    const [errors, setErrors] = useState({
+        DireccionIp: '',
+    });
     const [validated, setValidated] = useState(false);
     const [title, setTitle] = useState('');
     const [isDisabled, setIsDisabled] = useState(false);
 
-/*
-    useEffect(() => {
-        InventarioRedesApi.getAll().then((data) => setInventario(data));
-        idInventarioRedes ? getInventarioRedesBy() : resetForm();
-    }, []);
-*/
 useEffect(() => {
     if (idInventarioRedes) {
         getInventarioRedesBy(idInventarioRedes);
@@ -73,6 +69,14 @@ useEffect(() => {
         resetForm();
     }
 }, [idInventarioRedes]);
+
+useEffect(() => {
+    if (inventario.cambioInStock) {  // Verifica si ha habido un cambio en `InStock`
+       const cambioInStock = true;  // Llamada para enviar el correo
+    }
+}, [inventario.InStock]);  // Solo se ejecuta cuando cambia el valor de `InStock`
+
+
 
 
     const resetForm = () => {
@@ -91,7 +95,7 @@ useEffect(() => {
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
         } else {
-            //Guardar los datos
+            // Guardar los datos e incluir el envío de correo si es necesario
             saveInventario();
 
         }
@@ -101,9 +105,15 @@ useEffect(() => {
     const saveInventario = async () => {
         if(inventario.cambioInStock==true && inventario.InStock==false){
             inventario.FechaInStock = inventario.FechaModificacion 
+            try {
+                await InventarioRedesApi.enviarCorreoCambioInStock(inventario);
+                console.log("Cambio de InStock: correo enviado");
+            } catch (error) {
+                console.error("Error al enviar correo de cambio de stock:", error);
+                // Decidir si continuar o detener el flujo
+            }
         }
         await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventario).then(response => {
-
             if (response) {
                 Swal.fire({
                     title: '',
@@ -121,7 +131,7 @@ useEffect(() => {
                     confirmButtonText: 'Ok'
                 });
             }
-        });
+        });        
     }
 
     const formatDate = (value) => {
@@ -196,6 +206,25 @@ useEffect(() => {
     
     
     
+    // Expresión regular para validar IPv4
+    const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setInventario({ ...inventario, [name]: value });
+
+        // Validar Dirección IP
+        if (name === 'DireccionIp') {
+            if (!ipv4Regex.test(value)) {
+                setErrors({
+                    ...errors,
+                    DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1)',
+                });
+            } else {
+                setErrors({ ...errors, DireccionIp: '' });
+            }
+        }
+    };
     
 
     const handleDateChange = (fieldName) => (e) => {
@@ -294,13 +323,19 @@ useEffect(() => {
 
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtDireccionIp" label="Direccion Ip" className="mb-3">
-                                            <Form.Control type="text" placeholder="Direccion Ip"
+                                    <FloatingLabel controlId="txtDireccionIp" label="Dirección IP" className="mb-3">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Dirección IP"
                                                 name='DireccionIp'
                                                 value={inventario.DireccionIp || ""}
-                                                onChange={e => setInventario({ ...inventario, DireccionIp: e.target.value })}
-                                            //disabled={isDisabled} 
+                                                onChange={handleInputChange}
+                                                isInvalid={errors.DireccionIp !== ''}
                                             />
+
+                                            <Form.Control.Feedback type="invalid">
+                                                {errors.DireccionIp}
+                                            </Form.Control.Feedback>
                                         </FloatingLabel>
                                     </Col>
                                 </Row>
@@ -317,7 +352,7 @@ useEffect(() => {
                                                 name='idCriticidad'
                                                 value={inventario.idCriticidad}
                                                 onChange={e => setInventario({ ...inventario, idCriticidad: e.target.value })}
-                                                required
+                                                
                                             >
                                                 <option value="">Seleccione el nivel de Criticidad</option>
                                                 <option value="Baja">Baja</option>
@@ -602,7 +637,7 @@ useEffect(() => {
                             <Accordion.Body>
                                 <Row>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha de Soporte" className="mb-3">
+                                        <FloatingLabel controlId="txtFechaSoporte" label="Fecha Vencimiento de Soporte" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Soporte"
                                                 name='FechaSoporte'
                                                 value={inventario.FechaSoporte ? formatDate(inventario.FechaSoporte) : ""}
@@ -622,7 +657,7 @@ useEffect(() => {
                                         </FloatingLabel>
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtFechaGarantia" label="Fecha de Garantía" className="mb-3">
+                                        <FloatingLabel controlId="txtFechaGarantia" label="Fecha Vencimiento Garantía" className="mb-3">
                                             <Form.Control type="date" placeholder="Fecha de Garantía"
                                                 name='FechaGarantia'
                                                 value={inventario.FechaGarantia ? formatDate(inventario.FechaGarantia) : ""}

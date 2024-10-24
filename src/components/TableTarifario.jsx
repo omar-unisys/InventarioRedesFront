@@ -54,7 +54,7 @@ export const TableTarifario = () => {
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
             TipoDispositivo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Criticidad: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-            Combinacion: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ExtensionTarifa: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             ValorUnitario: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             SLA: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             CantidadBaseContrato: { value: null, matchMode: FilterMatchMode.STARTS_WITH }  
@@ -233,7 +233,7 @@ const handleFilter = (e) => {
                     <Column selectionMode="single" exportable={false} />
                     <Column field="TipoDispositivo" header="Tipo Dispositivo"  filter="true"/>
                     <Column field="Criticidad" header="Criticidad" filter="true" />
-                    <Column field="Combinacion" header="Combinacion" filter="true" />
+                    <Column field="ExtensionTarifa" header="Extension Tarifa" filter="true" />
                     <Column field="ValorUnitario" header="Criticidad Previa" filter="true"/>
                     <Column field="SLA" header="Criticidad Actual" filter="true"/>
                     <Column field="CantidadBaseContrato" header="Tipo de Equipo" filter="true"/>

@@ -17,54 +17,64 @@ import axios from 'axios';
 
 export const TableReporteDisponibilidad = () => {
 
-    // Función para formatear fechas
-    const formatDate = (value) => {
-        if (value instanceof Date && !isNaN(value.getTime())) {
-            return value.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
-        return ''; // Retorna una cadena vacía si el valor no es una fecha válida
-    };
 
-   // Estado
-   const [disponibilidad, setFacturas] = useState([]);
-   const [SelectedData, setSelectedData] = useState([]);
-   const [filters, setFilters] = useState({});
-   const [sortField, setSortField] = useState(null);
-   const [sortOrder, setSortOrder] = useState(null);
-   const toast = useRef(null);
-   const [originalData, setOriginalData] = useState([]);
-   const navigate = useNavigate();
+
+    // Estado
+    const [disponibilidad, setDisponibilidad] = useState([]);
+    const [SelectedData, setSelectedData] = useState([]);
+    const [filters, setFilters] = useState({});
+    const [sortField, setSortField] = useState(null);
+    const [sortOrder, setSortOrder] = useState(null);
+    const toast = useRef(null);
+    const [originalData, setOriginalData] = useState([]);
+    const navigate = useNavigate();
+
+    // Función para formatear fechas
+    const formatDateTime = (dateString) => {
+        const date = new Date(dateString);
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // Para el formato de 24 horas
+        };
+
+        const formattedDate = date.toLocaleString('sv-SE', options); // 'sv-SE' mantiene el formato de fecha ISO
+        return formattedDate.replace(' ', ' ').replace(',', ''); // Ajuste final para eliminar la coma
+    };
+    const month = new URLSearchParams(location.search).get('month')//Extrae el mes
+    const year = new URLSearchParams(location.search).get('year'); // Extrae el año
 
     //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                const data = await InventarioRedesApi.getDisponibilidad();
-                console.log("Data: ",data);
-                const formattedData = data;
-                setFacturas(data);
-                console.log("Facturas Tabla: ",data);
-                initFilters(); // Inicializa los filtros después de cargar los datos
-                setOriginalData(formattedData); // Guardar los datos originales
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
+            if (month !== null && year !== null) { // Asegúrate de que ambos valores no sean nulos
+                try {
+                    const data = await InventarioRedesApi.getDisponibilidadByMonth(month, year); // Incluye el año en la llamada
+                    const formattedData = data.map(item => ({
+                        ...item,
+                        Start_Date: formatDateTime(item.Start_Date),
+                        End_Date: formatDateTime(item.End_Date),
+                    }));
+                    setDisponibilidad(formattedData);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
+                }
             }
         };
         fetchData();
+    }, [month, year]); // Asegúrate de que tanto month como year son dependencias
 
-    }, []);
 
     const resetSort = () => {
         setSortField(null);   // Restablecer el campo de ordenamiento
         setSortOrder(null);   // Restablecer el orden (ascendente o descendente)
     };
 
-    
+
 
     //Se definen las opciones de los filtros en cada columna
     const initFilters = () => {
@@ -113,22 +123,22 @@ export const TableReporteDisponibilidad = () => {
         />
     );
 
-    
 
 
-// Función para manejar filtros y actualizar el estado de datos filtrados
-const handleFilter = (e) => {
-    // Revisa y actualiza los filtros
-    const newFilters = Object.fromEntries(
-        Object.entries(e.filters).map(([key, value]) => {
-            if (value && value.value) {
-                return [key, value];
-            }
-            return [key, { value: null, matchMode: FilterMatchMode.CONTAINS }];
-        })
-    );
-    setFilters(newFilters);
-};
+
+    // Función para manejar filtros y actualizar el estado de datos filtrados
+    const handleFilter = (e) => {
+        // Revisa y actualiza los filtros
+        const newFilters = Object.fromEntries(
+            Object.entries(e.filters).map(([key, value]) => {
+                if (value && value.value) {
+                    return [key, value];
+                }
+                return [key, { value: null, matchMode: FilterMatchMode.CONTAINS }];
+            })
+        );
+        setFilters(newFilters);
+    };
 
 
     const applyFilters = (data, filters) => {
@@ -249,19 +259,19 @@ const handleFilter = (e) => {
 
     const renderHeader = () => {
         const [selectedFile, setSelectedFile] = useState(null);
-    
+
         // Manejar el cambio de archivo en el input
         const handleFileChange = (e) => {
             setSelectedFile(e.target.files[0]);
         };
-    
+
         // Función para manejar el envío del archivo
         const handleUpload = async () => {
             if (!selectedFile) {
                 alert("Por favor, selecciona un archivo primero.");
                 return;
             }
-    
+
             try {
                 console.log("Archivo: ", selectedFile);
                 const result = await InventarioRedesApi.UploadExcelDisponibilidad(selectedFile);
@@ -270,20 +280,20 @@ const handleFilter = (e) => {
                 console.error('Error al subir el archivo:', error);
             }
         };
-    
+
         return (
             <div className="gap-2 align-items-center justify-content-between buttonStyles">
                 {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
                 {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
-                
+
                 {/* Formulario para cargar archivo */}
                 <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .xlsb" />
                 <button onClick={handleUpload} className="btn btn-primary">Subir Archivo</button>
             </div>
         );
     };
-    
-    
+
+
 
 
     //Ventana emergente de alerta confirmacion para editar la informacion de algun registro de la tabla 
@@ -326,13 +336,13 @@ const handleFilter = (e) => {
         />
     );
 
-   
+
 
     return (
         <div>
             <Toast ref={toast} />
             <div className="card">
-            <h4 className='titleCenter'> Reporte de Disponibilidad Inventario de Redes</h4>
+                <h4 className='titleCenter'> Reporte de Disponibilidad Inventario de Redes</h4>
                 <DataTable
                     value={disponibilidad}
                     paginator
@@ -340,7 +350,7 @@ const handleFilter = (e) => {
                     rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]}
-                    dataKey="Host" 
+                    dataKey="Host"
                     selectionMode="single"
                     selection={SelectedData}
                     onSelectionChange={(e) => setSelectedData(e.value ? e.value : null)}
@@ -360,21 +370,21 @@ const handleFilter = (e) => {
                     style={{ minWidth: '50rem' }}
                 >
                     <Column selectionMode="single" exportable={false} />
-                    <Column field="Client" header="Client"  filter="true"/>
+                    <Column field="Client" header="Client" filter="true" />
                     <Column field="Host" header="Host" filter="true" />
                     <Column field="Start_Date" header="Start Date" filter="true" />
-                    <Column field="End_Date" header="End Date" filter="true"/>
-                    <Column field="Days" header="Days" filter="true"/>
-                    <Column field="Availability" header="Availability (%)" filter="true"/>
-                    <Column field="Downtime" header="Downtime (h:m:s)" filter="true"/>
-                    <Column field="Type" header="Type" filter="true"/>
-                    <Column field="Page" header="Page" filter="true"/>
-                    <Column field="Group" header="Group" filter="true"/>
-                    <Column field="Comment" header="Comment" filter="true"/>
-                    <Column field="Name_Alias" header="Name_Alias" filter="true"/>
-                    <Column field="Description_1" header="Description_1" filter="true"/>
-                    <Column field="Description_2" header="Description_2" filter="true"/>
-                    <Column field="Description_3" header="Description_3" filter="true"/>
+                    <Column field="End_Date" header="End Date" filter="true" />
+                    <Column field="Days" header="Days" filter="true" />
+                    <Column field="Availability" header="Availability (%)" filter="true" />
+                    <Column field="Downtime" header="Downtime (h:m:s)" filter="true" />
+                    <Column field="Type" header="Type" filter="true" />
+                    <Column field="Page" header="Page" filter="true" />
+                    <Column field="Group" header="Group" filter="true" />
+                    <Column field="Comment" header="Comment" filter="true" />
+                    <Column field="Name_Alias" header="Name_Alias" filter="true" />
+                    <Column field="Description_1" header="Description_1" filter="true" />
+                    <Column field="Description_2" header="Description_2" filter="true" />
+                    <Column field="Description_3" header="Description_3" filter="true" />
 
 
 
@@ -383,6 +393,6 @@ const handleFilter = (e) => {
             </div>
         </div>
     );
-    
+
 
 }

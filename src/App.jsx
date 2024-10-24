@@ -18,6 +18,7 @@ import { TableReporteDisponibilidad } from './components/TableReporteDisponibili
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
 import { TableLineaBase } from './components/TableLineaBase'; 
 import { ExcelReaderInventarioRedes } from './components/ExcelReaderInventarioRedes'; 
+import { SelectMonth  } from './components/SelectMonth'; 
 
 
 function App() {
@@ -82,6 +83,7 @@ function App() {
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
           <Route path="/inventario/RegistroInventarioForm" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/ExcelReaderInventarioRedes/" element={<ExcelReaderInventarioRedes/>} />
+          <Route path="/inventario/SeleccionarMes/" element={<SelectMonth/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
       </AuthProvider>

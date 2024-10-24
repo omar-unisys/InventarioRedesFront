@@ -41,7 +41,7 @@ export const ExcelReaderInventarioRedes = () => {
             const worksheet = workbook.Sheets[sheetName];
 
             const startRow = 9;  // Fila 10 en 0-indexado
-            const endRow = 1606;   // Fila 13 en 0-indexado
+            const endRow = 1606;   // Fila 1607 en 0-indexado
 
             const range = XLSX.utils.decode_range(worksheet['!ref']);
             

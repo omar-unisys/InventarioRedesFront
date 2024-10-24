@@ -249,6 +249,49 @@ const UploadExcelDisponibilidad = async (file) => {
     }
 };
 
+const enviarCorreoCambioInStock = async (inventario) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}sendEmail`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mensaje: `El estado de InStock ha cambiado a ${inventario.InStock ? 'En Stock' : 'Fuera de Stock'}`,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Correo enviado con éxito", data);
+        return data;
+    } catch (error) {
+        console.error('Error al enviar el correo:', error);
+        throw error; // Propagar el error
+    }
+};
+
+const fetchWithErrorHandling = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error desconocido al hacer la solicitud');
+    }
+    return await response.json();
+};
+
+
+const getDisponibilidadByMonth = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}reportedisponibilidad/${year}/${month}`;
+    
+    return await fetchWithErrorHandling(url);
+};
 
 
 const InventarioRedesApi = {
@@ -263,9 +306,11 @@ const InventarioRedesApi = {
     getLineaBase,
     createLineaBase,
     getDisponibilidad,
+    getDisponibilidadByMonth,
     getSumCantidadByDevices,
     actualizarValorUnitario,
-    UploadExcelDisponibilidad
+    UploadExcelDisponibilidad,
+    enviarCorreoCambioInStock
 }
 
 export default InventarioRedesApi;
