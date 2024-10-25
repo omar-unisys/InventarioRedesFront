@@ -375,7 +375,7 @@ const handleFilter = (e) => {
 
     //Redirecciona al formulario de creacion de nuevo elemento en el inventario
     const RedirectCreateNewForm = () => {
-        navigate("/inventario/RegistroInventarioForm/", { replace: true });
+        navigate("/inventario/inventarioRedes/nuevo", { replace: true });
     }
 
 
@@ -419,7 +419,7 @@ const handleFilter = (e) => {
             confirmButtonText: "Si"
         }).then((result) => {
             if (result.isConfirmed) {
-                navigate(`/inventario/updateInventarioForm/${SelectedData.idSerial}`, { replace: true });
+                navigate(`/inventario/inventarioRedes/modificar/${SelectedData.idSerial}`, { replace: true });
             }
         });
     }, [SelectedData, navigate]);

@@ -30,13 +30,13 @@ export const SelectMonth = () => {
     const handleSubmit = () => {
         if (selectedMonth !== null) {
             // Redirigir a la pantalla del reporte de disponibilidad con el mes y año seleccionados
-            navigate(`/inventario/reporteDisponibilidad?month=${selectedMonth}&year=${selectedYear}`);
+            navigate(`/inventario/reporteDisponibilidad/ver?month=${selectedMonth}&year=${selectedYear}`);
         }
     };
 
     return (
         <div>
-            <h3>Seleccione el mes del reporte de disponibilidad</h3>
+            <h3>Seleccione mes y año del reporte de disponibilidad</h3>
             <Dropdown
                 value={selectedMonth}
                 options={months}
@@ -49,7 +49,8 @@ export const SelectMonth = () => {
                 onChange={(e) => setSelectedYear(e.value)}
                 placeholder="Seleccione un año"
             />
-            <Button label="Ver Reporte" onClick={handleSubmit}  className={"btn btn-primary"}/>
+            <Button label="Ver Reporte" onClick={handleSubmit}  className={"btn btn-secondary"}/>
+            <Button label="Crear Reporte" onClick={handleSubmit}  className={"btn btn-primary"}/>
         </div>
     );
 };

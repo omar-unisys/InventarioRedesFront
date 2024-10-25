@@ -75,15 +75,15 @@ function App() {
           <Route path="/" element={<HomePage/>} />
           <Route path="/admin/aplicaciones" element={<AdminPage/>} />
           <Route path="/inventario/inventarioRedes/" element={<TableInventarioRedes/>} />
+          <Route path="/inventario/inventarioRedes/nuevo" element={<RegistroInventarioForm/>} />
+          <Route path="/inventario/inventarioRedes/modificar/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/facturasInventarioRedes/" element={<TableFacturasInventarioRedes/>} />
           <Route path="/inventario/Tarifario/" element={<TableTarifario/>} />
-          <Route path="/inventario/reporteDisponibilidad/" element={<TableReporteDisponibilidad/>} />
+          <Route path="/inventario/reporteDisponibilidad/ver" element={<TableReporteDisponibilidad/>} />
           <Route path="/inventario/lineabase/" element={<TableLineaBase/>} />
-          <Route path="/inventario/UpdateInventarioForm/:idInventarioRedes" element={<UpdateInventarioForm/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
-          <Route path="/inventario/RegistroInventarioForm" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/ExcelReaderInventarioRedes/" element={<ExcelReaderInventarioRedes/>} />
-          <Route path="/inventario/SeleccionarMes/" element={<SelectMonth/>} />
+          <Route path="/inventario/reporteDisponibilidad/" element={<SelectMonth/>} />
           <Route path="/login" element={<Login/>} />
         </Routes>
       </AuthProvider>

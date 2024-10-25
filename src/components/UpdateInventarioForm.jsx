@@ -21,6 +21,7 @@ export const UpdateInventarioForm = () => {
         idSerial: '',
         idFilial: '',
         idCriticidad: '',
+        idCriticidadAnterior: '',
         idTipoEquipo: '',
         idPropietarioFilial: '',
         idFilialPago: '',
@@ -53,6 +54,7 @@ export const UpdateInventarioForm = () => {
         idModified: false,
         idSerialAnterior: "",
         cambioInStock: false,
+        cambioCriticidad: false,
         FechaInStock:new Date()
     });
     const [errors, setErrors] = useState({
@@ -103,17 +105,53 @@ useEffect(() => {
     }
 
     const saveInventario = async () => {
-        if(inventario.cambioInStock==true && inventario.InStock==false){
-            inventario.FechaInStock = inventario.FechaModificacion 
-            try {
-                await InventarioRedesApi.enviarCorreoCambioInStock(inventario);
-                console.log("Cambio de InStock: correo enviado");
-            } catch (error) {
-                console.error("Error al enviar correo de cambio de stock:", error);
-                // Decidir si continuar o detener el flujo
+        const datosEquipo = `
+            ID Serial: ${inventario.idSerial}
+            Marca: ${inventario.Marca}
+            Modelo: ${inventario.Modelo}
+            Nombre del Equipo: ${inventario.NombreEquipo}
+            Dirección IP: ${inventario.DireccionIp}
+            Tipo de Equipo: ${inventario.idTipoEquipo}
+            Sede: ${inventario.Sede}
+        `;
+    
+        let mensaje = '';
+    
+        // Construir el mensaje si hay cambios en stock
+        if (inventario.cambioInStock) {
+            if (inventario.InStock === false) {
+                inventario.FechaInStock = inventario.FechaModificacion;
+                mensaje += `El equipo ha pasado a estado Activo. Por favor, pasar a Monitoreo.\n\n`;
+            } else {
+                mensaje += `El equipo ha pasado a Stock. Por favor, quitar de Monitoreo.\n\n`;
             }
         }
-        await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventario).then(response => {
+    
+        // Construir el mensaje si hay cambios en criticidad
+        if (inventario.cambioCriticidad) {
+            mensaje += `Se ha cambiado el nivel de Criticidad de "${inventario.idCriticidadAnterior}" a "${inventario.idCriticidad}".\n\n`;
+        }
+    
+        // Agregar los detalles del equipo al final del mensaje
+        if (mensaje) {
+            mensaje += `Detalles del equipo:\n${datosEquipo}`;
+        }
+    
+        // Enviar correo solo si hay un mensaje para enviar
+        if (mensaje) {
+            try {
+                const destinatarios = await obtenerDestinatarios();
+                console.log("Destinatarios: ", destinatarios);
+                await InventarioRedesApi.enviarCorreoCambioInStock(inventario, mensaje, destinatarios);
+                console.log("Correo enviado con los cambios:");
+            } catch (error) {
+                console.error("Error al enviar correo:", error);
+            }
+        }
+    
+        // Actualizar el inventario
+        try {
+            const response = await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventario);
             if (response) {
                 Swal.fire({
                     title: '',
@@ -131,8 +169,39 @@ useEffect(() => {
                     confirmButtonText: 'Ok'
                 });
             }
-        });        
-    }
+        } catch (error) {
+            console.error("Error al actualizar el inventario:", error);
+            Swal.fire({
+                title: '',
+                text: 'Se generó un error al momento de actualizar. Por favor intente de nuevo',
+                icon: 'error',
+                confirmButtonText: 'Ok'
+            });
+        }
+    };
+    
+    
+    
+    
+    // Función para obtener los destinatarios de la base de datos
+    const obtenerDestinatarios = async () => {
+        try {
+            const data = await InventarioRedesApi.getEmailsDestinatarios(); // Espera el JSON directamente
+            console.log("Datos recibidos de la API:", data); // Imprime la respuesta
+            const correos = data.map(destinatario => destinatario.email);
+            console.log("Correos extraídos:", correos);
+            return correos;
+        } catch (error) {
+            console.error("Error en obtenerDestinatarios:", error);
+            throw new Error("Error al obtener los destinatarios");
+        }
+    };
+    
+    
+    
+    
+
+    
 
     const formatDate = (value) => {
         console.log("Fecha: ", value);
@@ -347,23 +416,31 @@ useEffect(() => {
                             <Accordion.Body>
                                 <Row>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtCriticidad" label="Criticidad" className="mb-3">
-                                            <Form.Control as="select" type="select"
-                                                name='idCriticidad'
-                                                value={inventario.idCriticidad}
-                                                onChange={e => setInventario({ ...inventario, idCriticidad: e.target.value })}
-                                                
-                                            >
-                                                <option value="">Seleccione el nivel de Criticidad</option>
-                                                <option value="Baja">Baja</option>
-                                                <option value="Media">Media</option>
-                                                <option value="Alta">Alta</option>
-                                                <option value="Muy Alta">Muy Alta</option>
-                                            </Form.Control>
-                                            <Form.Control.Feedback type="invalid">
-                                                Por favor seleccione un nivel de Criticidad
-                                            </Form.Control.Feedback>
-                                        </FloatingLabel>
+                                    <FloatingLabel controlId="txtCriticidad" label="Criticidad" className="mb-3">
+    <Form.Control as="select"
+        name='idCriticidad'
+        value={inventario.idCriticidad}
+        onChange={e => {
+            const nuevoValor = e.target.value;
+            setInventario(prevInventario => ({
+                ...prevInventario,
+                idCriticidad: nuevoValor,
+                cambioCriticidad: nuevoValor !== prevInventario.idCriticidad, // Verifica si hay cambio
+                idCriticidadAnterior: prevInventario.idCriticidad // Guarda el valor anterior
+            }));
+        }}
+    >
+        <option value="">Seleccione el nivel de Criticidad</option>
+        <option value="Baja">Baja</option>
+        <option value="Media">Media</option>
+        <option value="Alta">Alta</option>
+        <option value="Muy Alta">Muy Alta</option>
+    </Form.Control>
+    <Form.Control.Feedback type="invalid">
+        Por favor seleccione un nivel de Criticidad
+    </Form.Control.Feedback>
+</FloatingLabel>
+
 
                                     </Col>
                                     <Col sm>

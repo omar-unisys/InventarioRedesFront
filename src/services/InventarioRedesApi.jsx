@@ -249,7 +249,7 @@ const UploadExcelDisponibilidad = async (file) => {
     }
 };
 
-const enviarCorreoCambioInStock = async (inventario) => {
+const enviarCorreoCambioInStock = async (inventario, mensaje, destinatarios) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}sendEmail`;
 
     try {
@@ -259,7 +259,9 @@ const enviarCorreoCambioInStock = async (inventario) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                mensaje: `El estado de InStock ha cambiado a ${inventario.InStock ? 'En Stock' : 'Fuera de Stock'}`,
+                mensaje: mensaje,
+                destinatarios: destinatarios, // Pasar los destinatarios
+                idSerial: inventario.idSerial, // Suponiendo que tienes el ID del dispositivo
             }),
         });
 
@@ -273,9 +275,10 @@ const enviarCorreoCambioInStock = async (inventario) => {
         return data;
     } catch (error) {
         console.error('Error al enviar el correo:', error);
-        throw error; // Propagar el error
+        throw error;
     }
 };
+
 
 const fetchWithErrorHandling = async (url) => {
     const response = await fetch(url);
@@ -288,11 +291,19 @@ const fetchWithErrorHandling = async (url) => {
 
 
 const getDisponibilidadByMonth = async (month, year) => {
-    const url = `${import.meta.env.VITE_URL_SERVICES}reportedisponibilidad/${year}/${month}`;
+    const url = `${import.meta.env.VITE_URL_SERVICES}reportedisponibilidad/ver/${year}/${month}`;
     
     return await fetchWithErrorHandling(url);
 };
 
+const getEmailsDestinatarios= async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}emailsDestinatarios`;
+    
+    const res = await fetch(url);
+    const data = await res.json();
+    console.log("Correos: ", data);
+    return data;
+};
 
 const InventarioRedesApi = {
     createInventarioRedes,
@@ -310,7 +321,8 @@ const InventarioRedesApi = {
     getSumCantidadByDevices,
     actualizarValorUnitario,
     UploadExcelDisponibilidad,
-    enviarCorreoCambioInStock
+    enviarCorreoCambioInStock,
+    getEmailsDestinatarios
 }
 
 export default InventarioRedesApi;
