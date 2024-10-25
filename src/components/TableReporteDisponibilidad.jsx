@@ -285,10 +285,8 @@ export const TableReporteDisponibilidad = () => {
             <div className="gap-2 align-items-center justify-content-between buttonStyles">
                 {createButton("Quitar Filtros", "pi pi-filter-slash", clearFilter, 'clearFilterStyle clearfilterStyle')}
                 {createButton("Exportar", "pi pi-file-excel", exportExcel, "btn btn-success")}
-
                 {/* Formulario para cargar archivo */}
-                <input type="file" onChange={handleFileChange} accept=".xlsx, .xls, .xlsb" />
-                <button onClick={handleUpload} className="btn btn-primary">Subir Archivo</button>
+                           
             </div>
         );
     };
