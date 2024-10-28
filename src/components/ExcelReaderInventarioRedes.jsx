@@ -47,14 +47,25 @@ export const ExcelReaderInventarioRedes = () => {
         const thirdWorksheet = workbook.Sheets[thirdSheetName];
 
             const startRow = 9;  // Fila 10 en 0-indexado
-            const endRow = 1606;   // Fila 1607 en 0-indexado
 
+            // Obtener el rango de la hoja para calcular la última fila
             const range = XLSX.utils.decode_range(worksheet['!ref']);
+             // Determinar el endRow basado en la columna Serial
+            let endRow = startRow; // Inicia con la fila de inicio
+            for (let r = startRow; r <= range.e.r; r++) {
+                const cell = worksheet[XLSX.utils.encode_cell({ r: r, c: 0 })]; // Columna 0 es Serial
+                if (!cell || !cell.v) { // Si la celda está vacía
+                    break; // Sal del bucle si encuentras una fila en blanco
+                }
+                endRow = r; // Actualiza endRow si la fila tiene datos
+            }
+
+            
             
             const headers = XLSX.utils.sheet_to_json(worksheet, {
                 header: 1,
                 range: { s: { r: startRow - 1, c: 0 }, e: { r: startRow - 1, c: range.e.c } }
-            })[0];
+            })[0].map(header => header.replace(/(\r\n|\n|\r)/gm, "").trim()); // Limpia los saltos de línea
 
             const jsonData = XLSX.utils.sheet_to_json(worksheet, {
                 header: headers,
@@ -192,23 +203,42 @@ export const ExcelReaderInventarioRedes = () => {
         const thirdRange = XLSX.utils.decode_range(thirdWorksheet['!ref']);
         const thirdHeaders = XLSX.utils.sheet_to_json(thirdWorksheet, {
             header: 1,
-            range: { s: { r: startRow - 1, c: 0 }, e: { r: thirdRange.e.r, c: thirdRange.e.c } }
-        })[0];
+            range: { s: { r: startRow - 1, c: 0 }, e: { r: startRow - 1, c: thirdRange.e.c } }
+        })[0].map(header => header.replace(/(\r\n|\n|\r)/gm, "").trim()); // Limpia los saltos de línea
+        
+        
 
+        // Determinar el endRow para la tercera hoja de manera similar
+        let thirdEndRow = startRow;
+        for (let r = startRow; r <= thirdRange.e.r; r++) {
+            const cell = thirdWorksheet[XLSX.utils.encode_cell({ r: r, c: 0 })]; // Columna 0 es Serial
+            if (!cell || !cell.v) {
+                break; // Sal del bucle si encuentras una fila en blanco
+            }
+            thirdEndRow = r; // Actualiza thirdEndRow si la fila tiene datos
+        }
         const thirdJsonData = XLSX.utils.sheet_to_json(thirdWorksheet, {
             header: thirdHeaders,
-            range: { s: { r: startRow, c: 0 }, e: { r: thirdRange.e.r, c: thirdRange.e.c } }
+            range: { s: { r: startRow, c: 0 }, e: { r: thirdEndRow, c: thirdRange.e.c } }
+
         });
 
-        // Procesar datos de la tercera hoja
         const mappedThirdData = thirdJsonData.map(row => {
             const transformedRow = {};
             for (const [header, field] of Object.entries(fieldMapping)) {
+                
+        
                 if (row[header] !== undefined) {
                     let value = row[header];
-                    // Procesa la fecha y otros valores como en la primera hoja
+                    if (typeof value === 'string') {
+                        value = value.replace(/(\r\n|\n|\r)/gm, ""); // Elimina saltos de línea
+                    }
+        
+                    // Depuración de fecha
                     if (field.includes('Fecha')) {
-                        transformedRow[field] = convertDate(value) || "0000-00-00";
+                        const convertedDate = convertDate(value);
+                        
+                        transformedRow[field] = convertedDate || "0000-00-00";
                     } else if (field === 'Administrable') {
                         transformedRow[field] = convertYesNo(value) || 0;
                     } else if (field === 'idCriticidad') {
@@ -224,8 +254,11 @@ export const ExcelReaderInventarioRedes = () => {
             transformedRow['FechaModificacion'] = currentDate;
             return transformedRow;
         });
-
+        
         console.log('Mapped Third Data:', mappedThirdData);
+        
+
+        //console.log('Mapped Third Data:', mappedThirdData);
 
 
         try {
