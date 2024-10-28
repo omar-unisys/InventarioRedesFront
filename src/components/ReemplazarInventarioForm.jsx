@@ -53,10 +53,9 @@ export const ReemplazarInventarioForm = () => {
         FechaIngreso: '',
         FechaModificacion: '',
         Comentario: '',
-        Conectado: false,
         InStock: false,
         cambioInStock: false,
-        FechaInStock:''
+        FechaInStock: ''
     });
 
     const [inventarioSaliente, setInventarioSaliente] = useState({
@@ -91,10 +90,9 @@ export const ReemplazarInventarioForm = () => {
         FechaIngreso: '',
         FechaModificacion: '',
         Comentario: '',
-        Conectado: false,
         InStock: false,
         cambioInStock: false,
-        FechaInStock:''
+        FechaInStock: ''
     });
 
     const handleClear = () => {
@@ -130,19 +128,20 @@ export const ReemplazarInventarioForm = () => {
             FechaIngreso: '',
             FechaModificacion: '',
             Comentario: '',
-            Conectado: false,
             InStock: false,
             cambioInStock: false,
-            FechaInStock:''
+            FechaInStock: ''
         });
     };
-
+    const [errors, setErrors] = useState({
+        DireccionIp: '',
+    });
     const [inventarioTable, setInventarioTable] = useState([]);
     const [validated, setValidated] = useState(false);
     //const [title, setTitle] = useState('');
     const [isDisabled, setIsDisabled] = useState(true);
     const [newIdInventario, setValue] = useState('');
-    
+
 
     useEffect(() => {
         InventarioRedesApi.getAll().then((data) => setInventario(data));
@@ -152,23 +151,22 @@ export const ReemplazarInventarioForm = () => {
 
     const booleanToString = (value) => (value === 1 ? "Si" : "No");
 
-const getDates = (data = []) => 
-    data.map((d) => {
-        // Convertir fechas
-        const dates = ['FechaSoporte', 'FechaGarantia', 'FechaEoL', 'FechaIngreso', 'FechaModificacion'];
-        dates.forEach(date => {
-            if (d[date]) d[date] = new Date(d[date]);
+    const getDates = (data = []) =>
+        data.map((d) => {
+            // Convertir fechas
+            const dates = ['FechaSoporte', 'FechaGarantia', 'FechaEoL', 'FechaIngreso', 'FechaModificacion'];
+            dates.forEach(date => {
+                if (d[date]) d[date] = new Date(d[date]);
+            });
+
+            // Convertir valores booleanos
+            d.InStock = booleanToString(d.InStock);
+            d.Administrable = booleanToString(d.Administrable);
+
+            return d;
         });
 
-        // Convertir valores booleanos
-        d.InStock = booleanToString(d.InStock);
-        d.Conectado = booleanToString(d.Conectado);
-        d.Administrable = booleanToString(d.Administrable);
 
-        return d;
-    });
-
-    
 
     const handleCancel = () => {
 
@@ -179,33 +177,45 @@ const getDates = (data = []) =>
     const handleSubmit = e => {
         e.preventDefault();
         const form = e.currentTarget;
-        if (form.checkValidity() === false) {
-            
-        } else {
-            //Guardar los datos
-            saveInventario();
-
+    
+        // Validar Dirección IP si no está vacía
+        if (inventario.DireccionIp !== '' && !ipv4Regex.test(inventario.DireccionIp)) {
+            setErrors({
+                ...errors,
+                DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1) o deje el campo vacío',
+            });
+            return; // Detener la ejecución si la IP no es válida
         }
+    
+        // Si el formulario es válido y la IP es correcta, guarda los datos
+        if (form.checkValidity() === false) {
+            // Manejar los errores de validación aquí si es necesario
+        } else {
+            saveInventario(); // Llama a la función para guardar los datos
+        }
+    
         setValidated(true);
-    }
+    };
+    
 
+    //Función que   del formulario y actualiza los cambios en la base de datos
     const saveInventario = async () => {
         try {
             // Primero, actualiza la tabla InventarioRedes
             const responseRedes = await InventarioRedesApi.updateInventarioRedes(newIdInventario, inventario);
-    
-            if (responseRedes) {
-                throw new Error('Error al guardar InventarioRedes');
-            }
-    
-            // Luego, actualiza la segunda tabla (por ejemplo, InventarioOtraTabla)
+            if (!responseRedes) throw new Error('Error al guardar InventarioRedes');
+
+            const mensajeEquipo1 = construirMensajeEquipo(inventario);
+            await enviarCorreo(inventario, mensajeEquipo1);
+
+            // Luego, actualiza la segunda tabla
             const responseOtraTabla = await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventarioSaliente);
-    
-            if (responseOtraTabla) {
-                throw new Error('Error al guardar InventarioOtraTabla');
-            }
-    
-            // Si ambas actualizaciones son exitosas, muestra el mensaje de éxito
+            if (!responseOtraTabla) throw new Error('Error al guardar InventarioOtraTabla');
+
+            const mensajeEquipo2 = construirMensajeEquipo(inventarioSaliente);
+            await enviarCorreo(inventarioSaliente, mensajeEquipo2);
+
+            // Mensaje de éxito
             Swal.fire({
                 title: '',
                 text: 'Se ha guardado el formulario correctamente',
@@ -214,9 +224,8 @@ const getDates = (data = []) =>
             }).then(() => {
                 navigate("/inventario/inventarioRedes", { replace: true });
             });
-    
+
         } catch (error) {
-            // Muestra el mensaje de error si ocurre algún problema
             Swal.fire({
                 title: '',
                 text: `Hubo un problema al procesar la solicitud: ${error.message}`,
@@ -226,24 +235,66 @@ const getDates = (data = []) =>
         }
     };
 
+    //Función para enviar correo electronico
+    const enviarCorreo = async (inventario, mensaje) => {
+        try {
+            const destinatarios = await obtenerDestinatarios();
+            console.log("Destinatarios: ", destinatarios);
+            await InventarioRedesApi.enviarCorreoCambioInStock(inventario, mensaje, destinatarios);
+            console.log("Correo enviado con los cambios:");
+        } catch (error) {
+            console.error("Error al enviar correo:", error);
+        }
+    };
+
+    //Función que construye el mensaje que se envian en el correo 
+    const construirMensajeEquipo = (inventario) => {
+        let mensaje = '';
+        if (inventario.InStock === false) {
+            inventario.FechaInStock = inventario.FechaModificacion;
+            mensaje += `El equipo ha pasado a estado Activo. Por favor, pasar a Monitoreo.\n\n`;
+        } else {
+            mensaje += `El equipo ha pasado a Stock. Por favor, quitar de Monitoreo.\n\n`;
+        }
+
+        return mensaje + `Detalles del equipo:\n\n\tID Serial: ${inventario.idSerial}\n\tMarca: ${inventario.Marca}\n\tModelo: ${inventario.Modelo}\n\tNombre del Equipo: ${inventario.NombreEquipo}\n\tDirección IP: ${inventario.DireccionIp}\n\tTipo de Equipo: ${inventario.idTipoEquipo}\n\tSede: ${inventario.Sede}`;
+
+    };
+
+
+    // Función para obtener los destinatarios de la base de datos
+    const obtenerDestinatarios = async () => {
+        try {
+            const data = await InventarioRedesApi.getEmailsDestinatarios(); // Espera el JSON directamente
+            console.log("Datos recibidos de la API:", data); // Imprime la respuesta
+            const correos = data.map(destinatario => destinatario.email);
+            console.log("Correos extraídos:", correos);
+            return correos;
+        } catch (error) {
+            console.error("Error en obtenerDestinatarios:", error);
+            throw new Error("Error al obtener los destinatarios");
+        }
+    };
+
+
     const changeInstock = async (e) => {
         e.preventDefault();
-    
+
         try {
             // Espera la respuesta de la API
             const response = await InventarioRedesApi.getInventarioRedesByID(idInventarioRedes);
-    
+
             // Verifica si la respuesta es válida y tiene al menos un elemento
             if (response?.length > 0) {
                 const [data] = response; // Desestructuración para obtener el primer elemento
-    
+
                 // Función para formatear fechas
                 const formatDateFields = (fields) => {
                     fields.forEach(field => {
                         if (data[field]) data[field] = formatDate(new Date(data[field]));
                     });
                 };
-    
+
                 // Campos de fecha a formatear
                 const dateFields = [
                     'FechaSoporte',
@@ -253,15 +304,14 @@ const getDates = (data = []) =>
                     'FechaModificacion'
                 ];
                 formatDateFields(dateFields);
-    
+
                 // Función para convertir "Si"/"No" a booleanos
                 const toBoolean = (value) => value === "Si";
-    
+
                 // Actualiza los valores booleanos
                 data.InStock = true; // Cambia esto según tu lógica específica
                 data.Administrable = toBoolean(data.Administrable);
-                data.Conectado = toBoolean(data.Conectado);
-    
+
                 setInventarioSaliente(data);
             } else {
                 console.warn("No se encontraron datos para el ID proporcionado.");
@@ -270,7 +320,7 @@ const getDates = (data = []) =>
             console.error("Error al obtener o procesar los datos:", error);
         }
     };
-    
+
 
     const formatDate = (value) => {
         if (value == "Wed Dec 31 1969 19:00:00 GMT-0500 (Colombia Standard Time)" || value == null) {
@@ -291,7 +341,7 @@ const getDates = (data = []) =>
     const getInventarioRedesBy = async (e) => {
         e.preventDefault();
         console.log("Nuevo id: " + newIdInventario);
-    
+
         // Helper function to handle errors and clear state
         const handleError = (message) => {
             handleClear();
@@ -303,7 +353,7 @@ const getDates = (data = []) =>
                 icon: "error",
             });
         };
-    
+
         // Early return if the new ID matches the existing ID
         if (newIdInventario === idInventarioRedes) {
             handleClear();
@@ -315,7 +365,7 @@ const getDates = (data = []) =>
             });
             return;
         }
-    
+
         // Early return if the new ID is empty
         if (!newIdInventario) {
             handleClear();
@@ -323,18 +373,18 @@ const getDates = (data = []) =>
             setSelectedData(false);
             return;
         }
-    
+
         try {
             // Fetch data from the API
             const responseData = await InventarioRedesApi.getInventarioRedesByID(newIdInventario);
-    
+
             if (responseData.length === 0) {
                 handleError("El serial ingresado no se encuentra registrado. Por favor validar");
                 return;
             }
-    
+
             const data = responseData[0];
-    
+
             // Check if the serial matches and whether it is in stock
             if (newIdInventario === data.idSerial) {
                 if (data.InStock === 1) {
@@ -349,7 +399,7 @@ const getDates = (data = []) =>
                         FechaIngreso: formatDate(new Date(data.FechaIngreso)),
                         FechaModificacion: formatDate(new Date(data.FechaModificacion)),
                         Administrable: data.Administrable === 1,
-                        Conectado: data.Conectado === 1,
+
                         InStock: data.InStock === 0,
                     });
                     console.log(data);
@@ -364,7 +414,7 @@ const getDates = (data = []) =>
             console.error('Error fetching data:', error);
         }
     };
-    
+
 
     // Función que maneja el presionar Enter
     const handleKeyPress = (e) => {
@@ -377,7 +427,7 @@ const getDates = (data = []) =>
             changeInstock(e);
         }
     };
-  
+
     //Botnones de Control del Inventario en la Cabecera
     const renderHeader = () => {
         return (
@@ -387,11 +437,32 @@ const getDates = (data = []) =>
         );
     };
 
-     // Actualiza el estado del campo de texto para buscar el nuevo serial
-     const handleChange = (e) => {
+    // Actualiza el estado del campo de texto para buscar el nuevo serial
+    const handleChange = (e) => {
         setValue(e.target.value);
     };
 
+    // Expresión regular para validar IPv4
+    const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setInventario({ ...inventario, [name]: value });
+    
+        // Validar Dirección IP
+        if (name === 'DireccionIp') {
+            if (value === '' || ipv4Regex.test(value)) {
+                setErrors({ ...errors, DireccionIp: '' }); // Si está vacío o es válida, limpia el error
+            } else {
+                setErrors({
+                    ...errors,
+                    DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1) o deje el campo vacío',
+                });
+            }
+        }
+    };
+    
+    
 
     const header = renderHeader();
 
@@ -411,12 +482,12 @@ const getDates = (data = []) =>
             <Divider />
             <Divider align="center">
                 <div className="p-inputgroup flex-1">
-                    <InputText placeholder="Serial del nuevo equipo" 
-                        value={newIdInventario} 
+                    <InputText placeholder="Serial del nuevo equipo"
+                        value={newIdInventario}
                         onChange={handleChange}
                         onKeyPress={handleKeyPress}
                     />
-                    <Button icon="pi pi-search" className="search-button" onClick={(e) => {getInventarioRedesBy(e); changeInstock(e)}} />
+                    <Button icon="pi pi-search" className="search-button" onClick={(e) => { getInventarioRedesBy(e); changeInstock(e) }} />
                 </div>
             </Divider>
             <Divider />
@@ -434,12 +505,11 @@ const getDates = (data = []) =>
                                         <FloatingLabel controlId="txtIdSerial" label="Serial" className="mb-3">
                                             <Form.Control type="text" placeholder="Serial"
                                                 name='idSerial'
-                                                defaultValue={""}
-                                                value={inventario.idSerial}
+                                                value={inventario.idSerial || ''}
                                                 onChange={e => setInventario({ ...inventario, idSerial: e.target.value, idModified: true, idSerialAnterior: inventario.idSerial })}
                                                 required
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                             <Form.Control.Feedback type="invalid">
                                                 Por favor Ingrese el Serial
@@ -453,7 +523,7 @@ const getDates = (data = []) =>
                                                 value={inventario.Marca || ""}
                                                 onChange={e => setInventario({ ...inventario, Marca: e.target.value })}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                         </FloatingLabel>
                                     </Col>
@@ -464,7 +534,7 @@ const getDates = (data = []) =>
                                                 value={inventario.Modelo || ""}
                                                 onChange={e => setInventario({ ...inventario, Modelo: e.target.value })}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                         </FloatingLabel>
 
@@ -488,20 +558,26 @@ const getDates = (data = []) =>
                                                 value={inventario.VrsFirmware || ""}
                                                 onChange={e => setInventario({ ...inventario, VrsFirmware: e.target.value })}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                         </FloatingLabel>
 
 
                                     </Col>
                                     <Col sm>
-                                        <FloatingLabel controlId="txtDireccionIp" label="Direccion Ip" className="mb-3">
-                                            <Form.Control type="text" placeholder="Direccion Ip"
+                                        <FloatingLabel controlId="txtDireccionIp" label="Dirección IP" className="mb-3">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Dirección IP"
                                                 name='DireccionIp'
                                                 value={inventario.DireccionIp || ""}
-                                                onChange={e => setInventario({ ...inventario, DireccionIp: e.target.value })}
-                                                disabled={isDisabled}
+                                                onChange={handleInputChange}
+                                                isInvalid={errors.DireccionIp !== ''}
                                             />
+
+                                            <Form.Control.Feedback type="invalid">
+                                                {errors.DireccionIp}
+                                            </Form.Control.Feedback>
                                         </FloatingLabel>
                                     </Col>
                                 </Row>
@@ -520,7 +596,7 @@ const getDates = (data = []) =>
                                                 onChange={e => setInventario({ ...inventario, idCriticidad: e.target.value })}
                                                 required
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione el nivel de Criticidad</option>
                                                 <option value="Baja">Baja</option>
@@ -543,7 +619,7 @@ const getDates = (data = []) =>
 
                                                 checked={inventario.Administrable || false}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             >
                                             </Checkbox>
                                             <label htmlFor="chAdministrable" className="ml-2">Administrable</label>
@@ -552,23 +628,11 @@ const getDates = (data = []) =>
                                     </Col>
                                     <Col sm>
                                         <div className="flex align-items-center">
-                                            <Checkbox inputId="chConectado" name="Conectado" value="Conectado"
-                                                onChange={e => setInventario({ ...inventario, Conectado: e.checked })}
-                                                checked={inventario.Conectado || false}
-                                                disabled
-                                                //disabled={isDisabled}
-                                            >
-                                            </Checkbox>
-                                            <label htmlFor="chConectado" className="ml-2">Conectado</label>
-                                        </div>
-                                    </Col>
-                                    <Col sm>
-                                        <div className="flex align-items-center">
                                             <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock:true })}
+                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock: true })}
                                                 checked={inventario.InStock || false}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             >
                                             </Checkbox>
 
@@ -591,7 +655,7 @@ const getDates = (data = []) =>
                                                 onChange={e => setInventario({ ...inventario, idTipoEquipo: e.target.value })}
                                                 required
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione el tipo de equipo</option>
                                                 <option value="Comunicaciones">Comunicaciones</option>
@@ -611,7 +675,7 @@ const getDates = (data = []) =>
                                                 value={inventario.NumPuertos || ""}
                                                 onChange={e => setInventario({ ...inventario, NumPuertos: e.target.value })}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                         </FloatingLabel>
                                     </Col>
@@ -644,7 +708,7 @@ const getDates = (data = []) =>
                                                 value={inventario.TipoRed || ""}
                                                 onChange={e => setInventario({ ...inventario, TipoRed: e.target.value })}
                                                 disabled
-                                                //disabled={isDisabled}
+                                            //disabled={isDisabled}
                                             />
                                         </FloatingLabel>
 
@@ -957,6 +1021,7 @@ const getDates = (data = []) =>
                         <Col ></Col>
                         <Col style={{ textAlign: "center" }}><Button className="btn btn-danger" onClick={handleCancel}>Cancelar</Button></Col>
                         <Col style={{ textAlign: "center" }}><Button type="submit" className="btn btn-primary" disabled={!SelectedData}>Reemplazar</Button></Col>
+                        
                         <Col ></Col>
                     </Row>
 

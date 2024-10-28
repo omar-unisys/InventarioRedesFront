@@ -37,8 +37,14 @@ export const ExcelReaderInventarioRedes = () => {
         reader.onload = async (e) => {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
+            // Lee la primera hoja
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
+
+            
+        // Lee la tercera hoja "Equipos Disponibles"
+        const thirdSheetName = "Equipos Disponibles";
+        const thirdWorksheet = workbook.Sheets[thirdSheetName];
 
             const startRow = 9;  // Fila 10 en 0-indexado
             const endRow = 1606;   // Fila 1607 en 0-indexado
@@ -182,28 +188,78 @@ export const ExcelReaderInventarioRedes = () => {
 
             console.log('Mapped Data:', mappedData);
 
-            try {
-                const batchSize = 100; // Cambia este valor según sea necesario
-                for (let i = 0; i < mappedData.length; i += batchSize) {
-                    const batch = mappedData.slice(i, i + batchSize);
-                    await Promise.all(batch.map(async (item, index) => {
-                        try {
-                            await InventarioRedesApi.createInventarioRedes(item);
-                        } catch (err) {
-                            console.error(`Error al procesar la fila ${i + index + 1}:`, err);
-                            toast.show({ severity: 'error', summary: 'Error', detail: `Error en la fila ${i + index + 1}: ${err.message}` });
-                        }
-                    }));
+            // Procesar la tercera hoja
+        const thirdRange = XLSX.utils.decode_range(thirdWorksheet['!ref']);
+        const thirdHeaders = XLSX.utils.sheet_to_json(thirdWorksheet, {
+            header: 1,
+            range: { s: { r: startRow - 1, c: 0 }, e: { r: thirdRange.e.r, c: thirdRange.e.c } }
+        })[0];
+
+        const thirdJsonData = XLSX.utils.sheet_to_json(thirdWorksheet, {
+            header: thirdHeaders,
+            range: { s: { r: startRow, c: 0 }, e: { r: thirdRange.e.r, c: thirdRange.e.c } }
+        });
+
+        // Procesar datos de la tercera hoja
+        const mappedThirdData = thirdJsonData.map(row => {
+            const transformedRow = {};
+            for (const [header, field] of Object.entries(fieldMapping)) {
+                if (row[header] !== undefined) {
+                    let value = row[header];
+                    // Procesa la fecha y otros valores como en la primera hoja
+                    if (field.includes('Fecha')) {
+                        transformedRow[field] = convertDate(value) || "0000-00-00";
+                    } else if (field === 'Administrable') {
+                        transformedRow[field] = convertYesNo(value) || 0;
+                    } else if (field === 'idCriticidad') {
+                        transformedRow[field] = convertCriticidad(value) || "";
+                    } else {
+                        transformedRow[field] = value || null;
+                    }
+                } else {
+                    transformedRow[field] = "";
                 }
-                toast.show({ severity: 'success', summary: 'Éxito', detail: 'Datos importados correctamente' });
-            } catch (error) {
-                toast.show({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al importar los datos.' });
-                console.error('Error al importar los datos:', error);
             }
+            transformedRow['InStock'] = 1; // Establece InStock en 1 para esta hoja
+            transformedRow['FechaModificacion'] = currentDate;
+            return transformedRow;
+        });
+
+        console.log('Mapped Third Data:', mappedThirdData);
+
+
+        try {
+            const batchSize = 100; // Cambia este valor según sea necesario
+            // Procesar primera hoja
+            await processBatch(mappedData);
+            // Procesar tercera hoja
+            await processBatch(mappedThirdData);
+
+            toast.show({ severity: 'success', summary: 'Éxito', detail: 'Datos importados correctamente' });
+        } catch (error) {
+            toast.show({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al importar los datos.' });
+            console.error('Error al importar los datos:', error);
+        }
             
         };
 
         reader.readAsArrayBuffer(file);
+    };
+
+    // Función para procesar datos en lotes
+    const processBatch = async (data) => {
+        const batchSize = 100; // Cambia este valor según sea necesario
+        for (let i = 0; i < data.length; i += batchSize) {
+            const batch = data.slice(i, i + batchSize);
+            await Promise.all(batch.map(async (item, index) => {
+                try {
+                    await InventarioRedesApi.createInventarioRedes(item);
+                } catch (err) {
+                    console.error(`Error al procesar la fila ${i + index + 1}:`, err);
+                    toast.show({ severity: 'error', summary: 'Error', detail: `Error en la fila ${i + index + 1}: ${err.message}` });
+                }
+            }));
+        }
     };
 
     return (

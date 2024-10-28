@@ -92,14 +92,25 @@ export const RegistroInventarioForm = () => {
     const handleSubmit = e => {
         e.preventDefault();
         const form = e.currentTarget;
-        if (form.checkValidity() === false) {
-            console.log(form);
-        } else {
-            //Guardar los datos
-            saveInventario();
+    
+        // Validar Dirección IP si no está vacía
+        if (inventario.DireccionIp !== '' && !ipv4Regex.test(inventario.DireccionIp)) {
+            setErrors({
+                ...errors,
+                DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1) o deje el campo vacío',
+            });
+            return; // Detener la ejecución si la IP no es válida
         }
+    
+        // Si el formulario es válido y la IP es correcta, guarda los datos
+        if (form.checkValidity() === false) {
+            // Manejar los errores de validación aquí si es necesario
+        } else {
+            saveInventario(); // Llama a la función para guardar los datos
+        }
+    
         setValidated(true);
-    }
+    };
 
     const saveInventario = async () => {
 
@@ -212,7 +223,7 @@ export const RegistroInventarioForm = () => {
             if (!ipv4Regex.test(value)) {
                 setErrors({
                     ...errors,
-                    DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1)',
+                    DireccionIp: 'Por favor ingrese una dirección IP válida (Formato: 192.168.1.1) o deje el campo vacío',
                 });
             } else {
                 setErrors({ ...errors, DireccionIp: '' });
