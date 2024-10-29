@@ -188,7 +188,7 @@ const getLineaBase = async () => {
     return data;
 };
 
-//Funcion que comvierte en un objeto JSON los datos traidos de la tabla Linea Base
+//Funcion que comvierte en un objeto JSON los datos traidos de la tabla Disponibilidad
 const getDisponibilidad = async () => {
     const url = `${import.meta.env.VITE_URL_SERVICES}reportedisponibilidad/`;
     //console.log(url);
@@ -305,6 +305,29 @@ const getEmailsDestinatarios= async () => {
     return data;
 };
 
+const checkExistingRecords = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}check-records?month=${month}&year=${year}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.exists; // Asumiendo que el API devuelve { exists: true/false }
+};
+
+const deleteExistingRecords = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}delete-records?month=${month}&year=${year}`;
+    const res = await fetch(url, {
+        method: "DELETE",
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!res.ok) {
+        throw new Error('Error al eliminar registros existentes'); // Manejo de errores
+    }
+
+    const data = await res.json();
+    return data;
+};
+
+
 const InventarioRedesApi = {
     createInventarioRedes,
     getAll,
@@ -322,7 +345,9 @@ const InventarioRedesApi = {
     actualizarValorUnitario,
     UploadExcelDisponibilidad,
     enviarCorreoCambioInStock,
-    getEmailsDestinatarios
+    getEmailsDestinatarios,
+    checkExistingRecords,
+    deleteExistingRecords
 }
 
 export default InventarioRedesApi;

@@ -4,14 +4,16 @@ import { Button } from 'primereact/button';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2'; // Asegúrate de importar Swal
 import InventarioRedesApi from '../services/InventarioRedesApi';
+import * as xlsx from 'xlsx';
 
 export const SelectMonth = () => {
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-
+    
     const months = [
         { label: 'Enero', value: 1 },
         { label: 'Febrero', value: 2 },
@@ -55,6 +57,7 @@ export const SelectMonth = () => {
         setSelectedFile(e.target.files[0]);
     };
 
+    //función que consulta si ya hay registros para el mes y año seleccionados
     const handleUpload = async () => {
         if (!selectedFile) {
             Swal.fire({
@@ -65,11 +68,90 @@ export const SelectMonth = () => {
             });
             return;
         }
-
+    
         try {
-            console.log("Archivo: ", selectedFile);
+            // Leer el archivo Excel
+            const workbook = xlsx.read(await selectedFile.arrayBuffer());
+            const sheet_name = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheet_name];
+            const jsonData = xlsx.utils.sheet_to_json(worksheet, { raw: false }); // raw: false para leer fechas
+    
+            // Extraer las fechas
+            const startDates = jsonData.map(row => new Date(row['Start Date']));
+            const endDates = jsonData.map(row => new Date(row['End Date']));
+    
+            console.log('Start Dates:', startDates);
+            console.log('End Dates:', endDates);
+    
+            // Obtener los meses
+            const startMonths = startDates.map(date => date.getMonth());
+            const endMonths = endDates.map(date => date.getMonth());
+    
+            // Comprobar si el mes seleccionado está en los meses extraídos
+            if (!startMonths.includes(selectedMonth - 1) || !endMonths.includes(selectedMonth - 1)) {
+                Swal.fire({
+                    title: 'Mes no coincide',
+                    text: 'El mes del archivo no coincide con el mes seleccionado.',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar'
+                });
+                return;
+            }
+    
+            // Verificar si ya existen registros en la base de datos
+            let overwrite = false; // Variable para saber si se debe sobrescribir
+            try {
+                const response = await checkExistingRecords(selectedMonth, selectedYear);
+                console.log('Response from checkExistingRecords:', response);
+                if (response) {
+                    // Si existen registros, preguntar si se desea sobrescribir
+                    const result = await Swal.fire({
+                        title: 'Registro existente',
+                        text: 'El mes que intenta cargar ya tiene registrado el Reporte de Disponibilidad. ¿Desea sobrescribir los datos existentes?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, sobrescribir',
+                        cancelButtonText: 'No, cancelar'
+                    });
+    
+                    // Si el usuario confirma, establecer overwrite en true
+                    if (result.isConfirmed) {
+                        overwrite = true;
+    
+                        // Eliminar los registros existentes antes de la carga
+                        await InventarioRedesApi.deleteExistingRecords(selectedMonth, selectedYear);
+                    } else {
+                        return; // Cancelar la operación si el usuario no desea sobrescribir
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking existing records:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un problema al verificar los registros existentes.',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+                return; // Salir de la función en caso de error
+            }
+    
+            // Mostrar mensaje de carga
+            setIsLoading(true);
+            Swal.fire({
+                title: 'Cargando...',
+                text: 'Por favor, espere mientras se cargan los datos.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                showCloseButton: false,
+                willOpen: () => {
+                    Swal.showLoading(); // Mostrar el loader
+                }
+            });
+    
+            // Si el usuario ha decidido sobrescribir, proceder a cargar el archivo
             const result = await InventarioRedesApi.UploadExcelDisponibilidad(selectedFile);
             console.log('Archivo subido con éxito:', result);
+    
             setSelectedFile(null);
             setShowUploadForm(false); // Cerrar el formulario después de la carga
             Swal.fire({
@@ -78,16 +160,35 @@ export const SelectMonth = () => {
                 icon: 'success',
                 confirmButtonText: 'Aceptar'
             });
+    
         } catch (error) {
             console.error('Error al subir el archivo:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'Hubo un problema al subir el archivo.',
+                text: 'Hubo un problema al subir el archivo. Por favor validar posibles registros duplicados en el archivo.',
                 icon: 'error',
                 confirmButtonText: 'Aceptar'
             });
+        } finally {
+            setIsLoading(false); // limpia el estado de carga
         }
     };
+    
+    
+    
+    const checkExistingRecords = async (month, year) => {
+        const url = `${import.meta.env.VITE_URL_SERVICES}check-records?month=${month}&year=${year}`;
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+            throw new Error('Network response was not ok'); // Maneja errores de red
+        }
+        
+        const data = await res.json();
+        console.log('Check records response:', data); 
+        return data.exists; // Asumiendo que el API devuelve { exists: true/false }
+    };
+    
 
     return (
         <div className="select-month-container">
