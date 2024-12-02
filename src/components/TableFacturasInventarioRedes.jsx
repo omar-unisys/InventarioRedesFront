@@ -58,29 +58,71 @@ export const TableFacturasInventarioRedes = () => {
         { label: 'Baja', value: 'Baja' },
     ];
 
+    // Obtener los parámetros de la URL
+    const month = new URLSearchParams(location.search).get('month')//Extrae el mes
+    const year = new URLSearchParams(location.search).get('year'); // Extrae el año
+
     //Hook para obtener los datos de la DB y Guardarlos en un Objeto, además se inicializan los valores del los filtros
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Llamada para actualizar los valores de ValorUnitarioUSD si es necesario
-                await InventarioRedesApi.actualizarValorUnitario();
-                
-                // Luego recuperamos los datos actualizados
-                const data = await InventarioRedesApi.joinInventarioFactura();
-                console.log("Data: ", data);
-                const formattedData = getDates(data);
-                setFacturas(getDates(data));
-                console.log("Facturas Tabla: ", getDates(data));
-                initFilters(); // Inicializa los filtros después de cargar los datos
-                setOriginalData(formattedData); // Guardar los datos originales
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
-            }
-        };
-        fetchData();
-    }, []); // Este useEffect se ejecutará cada vez que se actualice la pestaña
-    
+        // Solo llamar a la API si month y year están presentes
+        if (month && year) {
+            const fetchData = async () => {
+                try {
+                    // Llamada al backend para actualizar valores unitarios
+                    //await InventarioRedesApi.actualizarValorUnitario(month, year);
+
+                    // Luego recuperamos los datos actualizados
+                    const data = await InventarioRedesApi.joinInventarioFactura(month, year);
+
+                    // Verifica si los datos están vacíos o no se encontraron registros
+                    if (!data || data.length === 0) {
+                        // Si no hay datos, muestra un mensaje y redirige al usuario
+                        Swal.fire({
+                            title: 'No se encontraron registros',
+                            text: 'No se encontraron registros para el periodo seleccionado. Por favor, valide el mes y año.',
+                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
+                        }).then(() => {
+                            // Redirigir a la pantalla de inventario
+                            navigate('/inventario/facturacionRedes');
+                        });
+                    } else {
+                        // Si hay datos, formatearlos y actualizar el estado
+                        const formattedData = getDates(data);
+                        setFacturas(formattedData);
+                        console.log("Facturas Tabla: ", formattedData);
+                        initFilters();
+                        setOriginalData(formattedData); // Guardar los datos originales
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+
+                    // Si ocurre un error con la llamada a la API (por ejemplo, 404 no encontrado)
+                    if (error.message.includes('404')) {
+                        // Muestra el error de que no se encontraron registros
+                        Swal.fire({
+                            title: 'No se encontraron registros',
+                            text: 'No se encontraron registros para el periodo seleccionado. Por favor, valide el mes y año.',
+                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
+                        }).then(() => {
+                            // Redirigir a la pantalla de inventario
+                            navigate('/inventario/facturacionRedes');
+                        });
+                    } else {
+                        // Mostrar un mensaje de error si algo sale mal
+                        toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
+                    }
+                }
+            };
+
+            fetchData();
+        } else {
+            console.error('Mes o año no proporcionados');
+        }
+    }, [month, year]); // Dependencias: el efecto se ejecutará cuando month o year cambien
+
+
 
     const resetSort = () => {
         setSortField(null);   // Restablecer el campo de ordenamiento
@@ -286,34 +328,254 @@ export const TableFacturasInventarioRedes = () => {
 
 
 
-    //Se crea el archivo de excel con columnas y filas
-    const exportExcel = () => {
-        import('xlsx').then((xlsx) => {
-            // Aplicar filtros a los datos
-            const filteredData = applyFilters(facturas, filters);
+    // Se crea el archivo de excel con las hojas solicitadas
+    const exportExcel = async () => {
+        import('xlsx').then(async (xlsx) => {
+            // Obtener los datos de las diferentes hojas
+            const filiales = await InventarioRedesApi.getFiliales();
+            const inventarioActivos = await InventarioRedesApi.getInventarioActivos(month, year);
+            const inventarioEnStock = await InventarioRedesApi.getInventarioEnStock(month, year);
+            const reporteDisponibilidad = await InventarioRedesApi.getDisponibilidadByMonth(month, year);
 
-            // Verificar si hay datos filtrados antes de exportar
-            if (filteredData.length === 0) {
-                alert('No hay datos que coincidan con los filtros aplicados.');
-                return;
+            // Crear el libro de Excel
+            const workbook = {
+                Sheets: {},
+                SheetNames: []
+            };
+
+            // Crear la hoja vacía llamada "Total facturacion mes" (sin agregar filas de datos)
+            const worksheetFacturacion = xlsx.utils.aoa_to_sheet([[]]); // Hoja vacía
+            workbook.SheetNames.push('Total facturacion mes');
+            workbook.Sheets['Total facturacion mes'] = worksheetFacturacion;
+
+            // Recorrer las filiales con un ciclo for...of para poder usar await dentro
+            for (const filial of filiales) {
+                // Verificar que la filial tenga datos en inventario activos
+                const datosFilial = inventarioActivos.filter(item => item.Filial === filial.idFilial);
+
+                // Si no hay datos para esta filial, saltamos al siguiente
+                if (datosFilial.length === 0) {
+                    console.warn(`No hay datos para la filial ${filial.idFilial}. Saltando...`);
+                    continue;
+                }
+
+                // Obtener el resumen de resultados totales para esta filial
+                const resumenTotales = await InventarioRedesApi.getResultadosTotales(filial.idFilial, month, year);
+
+                // Verificar que el resumen tenga datos
+                if (resumenTotales.length === 0) {
+                    console.warn(`No se encontraron resultados totales para la filial ${filial.idFilial}`);
+                }
+
+                // Crear la tabla de facturación con el resumen
+                const totalFacturacion = [
+                    ['FACTURACION (' + filial.idFilial + ') - Conectados'],  // Título de la tabla
+                    ['TipoEquipo', 'CriticidadActual', 'CountNroSerial', 'MaxValorUnitarioUSD', 'MaxDescuentoRecargoVolumen', 'TotalFacturarUSD'],  // Encabezados de la tabla
+                    ...resumenTotales.map(item => [
+                        item.TipoEquipo || 'Total',
+                        item.CriticidadActual || 'Total',
+                        item.CountNroSerial,
+                        item.MaxValorUnitarioUSD,
+                        item.MaxDescuentoRecargoVolumen,
+                        item.TotalFacturarUSD
+                    ])
+                ];
+
+                // Combinar la tabla de facturación con los datos de inventario de la filial
+                const datosCombinados = [
+                    ...totalFacturacion, // Primero los datos de facturación
+                    [''], // Separador vacío entre facturación e inventario (opcional)
+                    ['INVENTARIO (' + filial.idFilial + ')'],  // Título de la sección de inventario
+                    ['Filial', 'Sede', 'Ubicación Física del Equipo', 'Criticidad Previa', 'Criticidad Actual',
+                        'fecha Modificación Y O Ingreso', 'Tipo Equipo', 'Modelo', 'Fabricante', 'Tipo red', 'Detalle de Servicio',
+                        'Observaciones', 'Nombre Equipo', 'IP Equipo', 'Nro Placa Nro Serial', 'Activo/Inactivo',
+                        'Empresa Propietaria del Equipo', 'Estadisticas atención en sitio', 'Pais', 'Que Salen',
+                        '# Elementos', 'TipoCriticidad', 'Tipo Precio', 'Valor Unitario USD', 'Disponibilidad Real Cliente',
+                        'ANS COMPROMETIDO', 'ANS CUMPLIDO', 'Descuento/recargo por volumen', 'Descuento ANS', 'Total a facturar USD'
+                    ], // Encabezados de inventario
+                    ...datosFilial.map(item => [
+                        item.Filial,
+                        item.Sede,
+                        item.UbicacionFisicaEquipo,
+                        item.CriticidadPrevia,
+                        item.CriticidadActual,
+                        item.FechaModificacionIngreso,
+                        item.TipoEquipo,
+                        item.Modelo,
+                        item.Fabricante,
+                        item.TipoRed,
+                        item.DetalleServicio,
+                        item.Observaciones,
+                        item.NombreEquipo,
+                        item.IPEquipo,
+                        item.NroSerial,
+                        item.ActivoInactivo,
+                        item.EmpresaPropietariaEquipo,
+                        item.EstadisticasAtencionSitio,
+                        item.Pais,
+                        item.QueSalen,
+                        item.NumeroElementos,
+                        item.TipoCriticidad,
+                        item.TipoPrecio,
+                        item.ValorUnitarioUSD,
+                        item.DisponibilidadRealCliente,
+                        item.ANSComprometido,
+                        item.ANSCumplido,
+                        item.DescuentoRecargoVolumen,
+                        item.DescuentoANS,
+                        item.TotalFacturarUSD
+                    ])
+                ];
+
+                // Crear la hoja combinada de facturación e inventario para la filial
+                const worksheetFilialCombinada = xlsx.utils.aoa_to_sheet(datosCombinados);
+
+                // Agregar la hoja combinada al libro de trabajo
+                workbook.SheetNames.push(filial.idFilial);  // Nombre de la hoja combinada
+                workbook.Sheets[filial.idFilial] = worksheetFilialCombinada;
+
+                // Mapeo de cada fila de datos para la facturación
+                for (const item of resumenTotales) {
+                    // Obtener los valores de facturación de esta filial
+                    const valorFacturacionUSD = parseFloat(item.TotalFacturarUSD) || 0;  // Valor de facturación
+                    const ise = parseFloat(item.MaxDescuentoRecargoVolumen) || 0;  // ISE (puedes ajustar este valor según el cálculo que necesites)
+                    const actividadesEspeciales = parseFloat(item.MaxValorUnitarioUSD) || 0;  // Actividades especiales en moneda local (ajustar según sea necesario)
+                    const moneda = 'USD';  // Establecer la moneda. Si tienes más detalles, puedes hacer esta asignación dinámica.
+
+                    const nuevaFila = [
+                        filial.idFilial,
+                        valorFacturacionUSD.toFixed(2),
+                        ise.toFixed(2),
+                        actividadesEspeciales.toFixed(2),
+                        moneda
+                    ];
+
+                    // Usar sheet_add_aoa para agregar las nuevas filas
+                    xlsx.utils.sheet_add_aoa(worksheetFacturacion, [nuevaFila], { origin: -1 });
+                }
             }
 
-            // Convertir los datos filtrados a una hoja de cálculo
-            const worksheet = xlsx.utils.json_to_sheet(filteredData);
-            const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
+            // Crear una hoja con el inventario de equipos activos (Activo = 1)
+            const worksheetInventarioActivos = xlsx.utils.aoa_to_sheet([
+                // Encabezados de la hoja "Inventario RED"
+                ['Propietario Equipo', 'Filial En Uso', 'Empresa Pago', 'Marca', 'Modelo', 'Serial',
+                    'Placa', 'Nombre Equipo', 'Dirección IP', 'TipoEquipo', 'Tipo Red', 'Criticidad Actual',
+                    'Pais', 'Sede', 'Edificio Sede', 'Piso Sede', 'Ubicación', 'Tipo Servicio', 'Detalle de Servicios',
+                    'Administrable', 'Fecha vencimiento Soporte', 'Detalle de Soporte', 'Fecha Vencimiento Garantía',
+                    'Detalle de Garantía', 'EoL', 'EoL Detalle', 'Versión Firmware', 'Número Puertos', 'Estado',
+                    'Comentario', 'Fecha de Ingreso', 'Activo/Inactivo'],
+                // Mapeo de datos
+                ...inventarioActivos.map(item => [
+                    item.idPropietarioFilial,
+                    item.idFilialEnUso,
+                    item.Filial,
+                    item.Fabricante,
+                    item.Modelo,
+                    item.NroSerial,
+                    item.Placa,
+                    item.NombreEquipo,
+                    item.IPEquipo,
+                    item.TipoEquipo,
+                    item.TipoRed,
+                    item.CriticidadActual,
+                    item.Pais,
+                    item.Sede,
+                    item.Edificio,
+                    item.Piso,
+                    item.UbicacionFisicaEquipo,
+                    item.TipoServicio,
+                    item.DetalleServicio,
+                    item.Administrable === 1 ? 'Si' : 'No',  // Convertir 1 a "Si" y 0 a "No"
+                    item.FechaSoporte,
+                    item.SoporteDetalle,
+                    item.FechaGarantia,
+                    item.GarantiaDetalle,
+                    item.FechaEoL,
+                    item.EolDetalle,
+                    item.VrsFirmware,
+                    item.NumPuertos,
+                    item.idEstado,
+                    item.Comentario,
+                    item.FechaIngreso,
+                    item.ActivoInactivo === 1 ? 'Si' : 'No'  // Convertir 1 a "Si" y 0 a "No"
+                ])
+            ]);
+
+            // Agregar la hoja de "Inventario RED" al libro de trabajo
+            workbook.SheetNames.push('Inventario RED');
+            workbook.Sheets['Inventario RED'] = worksheetInventarioActivos;
+
+            // Crear una hoja con el reporte de disponibilidad para el mes y año seleccionados
+            const worksheetReporteDisponibilidad = xlsx.utils.json_to_sheet(reporteDisponibilidad);
+            workbook.SheetNames.push('Reporte Disponibilidad');
+            workbook.Sheets['Reporte Disponibilidad'] = worksheetReporteDisponibilidad;
+
+            // Filtrar los equipos disponibles (Activo = 0)
+            const equiposEnStock = inventarioEnStock.filter(item => item.ActivoInactivo === 0);
+
+            // Crear la hoja con los equipos disponibles (Activo = 0)
+            const worksheetInventarioDisponibles = xlsx.utils.aoa_to_sheet([
+                // Encabezados de la hoja "Equipos en Stock"
+                ['Propietario Equipo', 'Filial En Uso', 'Empresa Pago', 'Marca', 'Modelo', 'Serial',
+                    'Placa', 'Nombre Equipo', 'Dirección IP', 'TipoEquipo', 'Tipo Red', 'Criticidad Actual',
+                    'Pais', 'Sede', 'Edificio Sede', 'Piso Sede', 'Ubicación', 'Tipo Servicio', 'Detalle de Servicios',
+                    'Administrable', 'Fecha vencimiento Soporte', 'Detalle de Soporte', 'Fecha Vencimiento Garantía',
+                    'Detalle de Garantía', 'EoL', 'EoL Detalle', 'Versión Firmware', 'Número Puertos', 'Estado',
+                    'Comentario', 'Fecha de Ingreso', 'Activo/Inactivo'],
+                // Mapeo de datos
+                ...equiposEnStock.map(item => [
+                    item.idPropietarioFilial,
+                    item.idFilialEnUso,
+                    item.Filial,
+                    item.Fabricante,
+                    item.Modelo,
+                    item.NroSerial,
+                    item.Placa,
+                    item.NombreEquipo,
+                    item.IPEquipo,
+                    item.TipoEquipo,
+                    item.TipoRed,
+                    item.CriticidadActual,
+                    item.Pais,
+                    item.Sede,
+                    item.Edificio,
+                    item.Piso,
+                    item.UbicacionFisicaEquipo,
+                    item.TipoServicio,
+                    item.DetalleServicio,
+                    item.Administrable === 1 ? 'Si' : 'No',  // Convertir 1 a "Si" y 0 a "No"
+                    item.FechaSoporte,
+                    item.SoporteDetalle,
+                    item.FechaGarantia,
+                    item.GarantiaDetalle,
+                    item.FechaEoL,
+                    item.EolDetalle,
+                    item.VrsFirmware,
+                    item.NumPuertos,
+                    item.idEstado,
+                    item.Comentario,
+                    item.FechaIngreso,
+                    item.ActivoInactivo === 1 ? 'Si' : 'No'  // Convertir 1 a "Si" y 0 a "No"
+                ])
+            ]);
+
+            // Agregar la hoja de "Equipos en Stock" al libro de trabajo
+            workbook.SheetNames.push('Equipos en Stock');
+            workbook.Sheets['Equipos en Stock'] = worksheetInventarioDisponibles;
+
+            // Convertir el libro de trabajo a un buffer
             const excelBuffer = xlsx.write(workbook, {
                 bookType: 'xlsx',
                 type: 'array'
             });
 
             // Guardar el archivo Excel
-            saveAsExcelFile(excelBuffer, 'facturas');
+            saveAsExcelFile(excelBuffer, 'inventario_redes');
         });
     };
 
 
-
-    // Se da nombre y formato xlsx al archivo creado
+    // Guardar el archivo Excel
     const saveAsExcelFile = (buffer, fileName) => {
         import('file-saver').then((module) => {
             if (module && module.default) {
@@ -326,6 +588,8 @@ export const TableFacturasInventarioRedes = () => {
             }
         });
     };
+
+
 
     //Se quitan los filtos de la tabla
     const clearFilter = () => {

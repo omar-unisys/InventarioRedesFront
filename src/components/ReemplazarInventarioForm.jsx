@@ -54,6 +54,7 @@ export const ReemplazarInventarioForm = () => {
         FechaModificacion: '',
         Comentario: '',
         InStock: false,
+        Activo: false,
         cambioInStock: false,
         FechaInStock: ''
     });
@@ -91,6 +92,7 @@ export const ReemplazarInventarioForm = () => {
         FechaModificacion: '',
         Comentario: '',
         InStock: false,
+        Activo: true,
         cambioInStock: false,
         FechaInStock: ''
     });
@@ -129,6 +131,7 @@ export const ReemplazarInventarioForm = () => {
             FechaModificacion: '',
             Comentario: '',
             InStock: false,
+            Activo: true,
             cambioInStock: false,
             FechaInStock: ''
         });
@@ -161,6 +164,7 @@ export const ReemplazarInventarioForm = () => {
 
             // Convertir valores booleanos
             d.InStock = booleanToString(d.InStock);
+            d.Activo = booleanToString(d.Activo);
             d.Administrable = booleanToString(d.Administrable);
 
             return d;
@@ -187,11 +191,27 @@ export const ReemplazarInventarioForm = () => {
             return; // Detener la ejecución si la IP no es válida
         }
     
+        
+        // Actualizar Activo basado en InStock antes de guardar
+        const nuevoInventario = {
+            ...inventario,
+            Activo: !inventario.InStock, // Activo será false si InStock es true, y viceversa
+            
+        };
+    
+        // Aquí es donde copiamos la propiedad `Sede` desde inventarioSaliente a inventario
+        const nuevoInventarioConSede = {
+            ...nuevoInventario,  // mantenemos los cambios previos de inventario
+            Sede: inventarioSaliente.Sede, // Copiamos la Sede desde inventarioSaliente a inventario
+            Ubicacion: inventarioSaliente.Ubicacion,
+            Edificio: inventarioSaliente.Edificio,
+        };
+
         // Si el formulario es válido y la IP es correcta, guarda los datos
         if (form.checkValidity() === false) {
             // Manejar los errores de validación aquí si es necesario
         } else {
-            saveInventario(); // Llama a la función para guardar los datos
+            saveInventario(nuevoInventarioConSede); // Llama a la función para guardar los datos con el nuevo estado
         }
     
         setValidated(true);
@@ -199,22 +219,23 @@ export const ReemplazarInventarioForm = () => {
     
 
     //Función que   del formulario y actualiza los cambios en la base de datos
-    const saveInventario = async () => {
+    const saveInventario = async (nuevoInventario) => {
         try {
             // Primero, actualiza la tabla InventarioRedes
-            const responseRedes = await InventarioRedesApi.updateInventarioRedes(newIdInventario, inventario);
+            const responseRedes = await InventarioRedesApi.updateInventarioRedes(newIdInventario, nuevoInventario);
             if (!responseRedes) throw new Error('Error al guardar InventarioRedes');
-
-            const mensajeEquipo1 = construirMensajeEquipo(inventario);
-            await enviarCorreo(inventario, mensajeEquipo1);
-
+    
+            // Verifica el estado de InStock y Activo antes de construir el mensaje
+            const mensajeEquipo1 = construirMensajeEquipo(nuevoInventario);
+            await enviarCorreo(nuevoInventario, mensajeEquipo1);
+    
             // Luego, actualiza la segunda tabla
             const responseOtraTabla = await InventarioRedesApi.updateInventarioRedes(idInventarioRedes, inventarioSaliente);
             if (!responseOtraTabla) throw new Error('Error al guardar InventarioOtraTabla');
-
+    
             const mensajeEquipo2 = construirMensajeEquipo(inventarioSaliente);
             await enviarCorreo(inventarioSaliente, mensajeEquipo2);
-
+    
             // Mensaje de éxito
             Swal.fire({
                 title: '',
@@ -224,7 +245,7 @@ export const ReemplazarInventarioForm = () => {
             }).then(() => {
                 navigate("/inventario/inventarioRedes", { replace: true });
             });
-
+    
         } catch (error) {
             Swal.fire({
                 title: '',
@@ -234,14 +255,14 @@ export const ReemplazarInventarioForm = () => {
             });
         }
     };
+    
+    
 
     //Función para enviar correo electronico
     const enviarCorreo = async (inventario, mensaje) => {
         try {
             const destinatarios = await obtenerDestinatarios();
-            console.log("Destinatarios: ", destinatarios);
             await InventarioRedesApi.enviarCorreoCambioInStock(inventario, mensaje, destinatarios);
-            console.log("Correo enviado con los cambios:");
         } catch (error) {
             console.error("Error al enviar correo:", error);
         }
@@ -250,25 +271,25 @@ export const ReemplazarInventarioForm = () => {
     //Función que construye el mensaje que se envian en el correo 
     const construirMensajeEquipo = (inventario) => {
         let mensaje = '';
-        if (inventario.InStock === false) {
+        // Cambia la lógica para verificar ambos valores
+        if (inventario.Activo === 1 && inventario.InStock === 0) {
             inventario.FechaInStock = inventario.FechaModificacion;
-            mensaje += `El equipo ha pasado a estado Activo. Por favor, pasar a Monitoreo.\n\n`;
-        } else {
-            mensaje += `El equipo ha pasado a Stock. Por favor, quitar de Monitoreo.\n\n`;
+            mensaje += `El equipo ha pasado a estado Activo. Por favor, ingresar a Monitoreo.\n\n`;
+        } else if (inventario.Activo === 0 && inventario.InStock === 1) {
+            mensaje += `El equipo ha pasado a Stock. Por favor, retirar de Monitoreo.\n\n`;
         }
-
-        return mensaje + `Detalles del equipo:\n\n\tID Serial: ${inventario.idSerial}\n\tMarca: ${inventario.Marca}\n\tModelo: ${inventario.Modelo}\n\tNombre del Equipo: ${inventario.NombreEquipo}\n\tDirección IP: ${inventario.DireccionIp}\n\tTipo de Equipo: ${inventario.idTipoEquipo}\n\tSede: ${inventario.Sede}`;
-
+    
+        return mensaje + `Detalles del equipo:\n\n\tID Serial: ${inventario.idSerial}\n\tMarca: ${inventario.Marca}\n\tModelo: ${inventario.Modelo}\n\tNombre del Equipo: ${inventario.NombreEquipo}\n\tDirección IP: ${inventario.DireccionIp}\n\tTipo de Equipo: ${inventario.idTipoEquipo}\n\tSede: ${inventario.Sede}\n\tCriticidad: ${inventario.idCriticidad}`;
     };
+    
+    
 
 
     // Función para obtener los destinatarios de la base de datos
     const obtenerDestinatarios = async () => {
         try {
             const data = await InventarioRedesApi.getEmailsDestinatarios(); // Espera el JSON directamente
-            console.log("Datos recibidos de la API:", data); // Imprime la respuesta
             const correos = data.map(destinatario => destinatario.email);
-            console.log("Correos extraídos:", correos);
             return correos;
         } catch (error) {
             console.error("Error en obtenerDestinatarios:", error);
@@ -309,7 +330,8 @@ export const ReemplazarInventarioForm = () => {
                 const toBoolean = (value) => value === "Si";
 
                 // Actualiza los valores booleanos
-                data.InStock = true; // Cambia esto según tu lógica específica
+                data.InStock = true; 
+                data.Activo = false; 
                 data.Administrable = toBoolean(data.Administrable);
 
                 setInventarioSaliente(data);
@@ -340,8 +362,7 @@ export const ReemplazarInventarioForm = () => {
 
     const getInventarioRedesBy = async (e) => {
         e.preventDefault();
-        console.log("Nuevo id: " + newIdInventario);
-
+        
         // Helper function to handle errors and clear state
         const handleError = (message) => {
             handleClear();
@@ -401,8 +422,8 @@ export const ReemplazarInventarioForm = () => {
                         Administrable: data.Administrable === 1,
 
                         InStock: data.InStock === 0,
+                        Activo: data.Activo === 1,
                     });
-                    console.log(data);
                 } else {
                     handleError(`El elemento del inventario con Serial ${newIdInventario}, no se encuentra en Stock. Por favor validar`);
                 }
@@ -477,7 +498,7 @@ export const ReemplazarInventarioForm = () => {
                 <Column field="DireccionIp" header="DireccionIp"></Column>
                 <Column field="idTipoEquipo" header="Tipo de Equipo"></Column>
                 <Column field="Sede" header="Sede"></Column>
-                <Column field="InStock" header="En Stock"></Column>
+                <Column field="Activo" header="Activo"></Column>
             </DataTable>
             <Divider />
             <Divider align="center">
@@ -624,22 +645,32 @@ export const ReemplazarInventarioForm = () => {
                                             </Checkbox>
                                             <label htmlFor="chAdministrable" className="ml-2">Administrable</label>
                                         </div>
+</Col>
+                                        <Col sm>
+    <div className="flex align-items-center">
+        <Checkbox
+            inputId="chInStock"
+            name="InStock"
+            value="InStock"
+            onChange={e => {
+                const isInStock = e.checked;
+                setInventario({
+                    ...inventario,
+                    InStock: isInStock,
+                    Activo: !isInStock, // Cambia Activo basado en InStock
+                    cambioInStock: true
+                });
+            }}
+            checked={inventario.InStock || false}
+            disabled // Si quieres mantenerlo deshabilitado
+        />
+        <label htmlFor="chInStock" className="ml-2">Activo</label>
+    </div>
+</Col>
 
-                                    </Col>
-                                    <Col sm>
-                                        <div className="flex align-items-center">
-                                            <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock: true })}
-                                                checked={inventario.InStock || false}
-                                                disabled
-                                            //disabled={isDisabled}
-                                            >
-                                            </Checkbox>
 
-                                            <label htmlFor="chInStock" className="ml-2">En Stock</label>
-                                        </div>
-                                    </Col>
-                                </Row>
+                                    
+                                    </Row>   
                             </Accordion.Body>
                         </Accordion.Item>
 
@@ -815,6 +846,7 @@ export const ReemplazarInventarioForm = () => {
                                                 disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione la filial propietaria</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -822,6 +854,9 @@ export const ReemplazarInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -839,6 +874,7 @@ export const ReemplazarInventarioForm = () => {
                                                 disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione la filial de Pago</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -846,6 +882,9 @@ export const ReemplazarInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -864,6 +903,7 @@ export const ReemplazarInventarioForm = () => {
                                                 disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione la filial</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -871,6 +911,9 @@ export const ReemplazarInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">

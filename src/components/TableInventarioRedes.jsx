@@ -45,7 +45,6 @@ export const TableInventarioRedes = () => {
                 const data = await InventarioRedesApi.getAll();
                 const formattedData = getDates(data);
                 setInventario(getDates(data));
-                console.log("Inventario desde Tabla: ",getDates(data));
                 initFilters(); // Inicializa los filtros después de cargar los datos
                 setOriginalData(formattedData); // Guardar los datos originales
             } catch (error) {
@@ -86,6 +85,7 @@ export const TableInventarioRedes = () => {
             FechaModificacion: convertDate(d.FechaModificacion),
             FechaInStock: convertDate(d.FechaInStock),
             InStock: convertBooleanToYesNo(d.InStock),
+            Activo: convertBooleanToYesNo(d.Activo),
             Administrable: convertBooleanToYesNo(d.Administrable)
         }));
     };
@@ -108,6 +108,7 @@ export const TableInventarioRedes = () => {
             NombreEquipo: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             DireccionIp: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             InStock: { value: null, matchMode: FilterMatchMode.EQUALS },
+            Activo: { value: null, matchMode: FilterMatchMode.EQUALS },
             FechaInStock: { value: null, matchMode: FilterMatchMode.DATE_IS },
             TipoRed: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
             Pais: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -223,7 +224,8 @@ export const TableInventarioRedes = () => {
         />
     );
 
-    const enStockRowFilterTemplate = (options) => createRowFilterTemplate(options, enStockItemTemplate);
+    //const enStockRowFilterTemplate = (options) => createRowFilterTemplate(options, enStockItemTemplate);
+    const ActivoRowFilterTemplate = (options) => createRowFilterTemplate(options, enStockItemTemplate);
     const administrableRowFilterTemplate = (options) => createRowFilterTemplate(options, administrableItemTemplate);
     const criticidadRowFilterTemplate = (options) => RowFilterTemplate(options);
 
@@ -254,6 +256,10 @@ export const TableInventarioRedes = () => {
         return <Tag value={rowData.InStock} severity={getSeverity(rowData.InStock)} />;
     };
 
+    //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Activo
+    const ActivoBodyTemplate = (rowData) => {
+        return <Tag value={rowData.Activo} severity={getSeverity(rowData.Activo)} />;
+    };
 
     //Determinar el color de las opciones (De las filas de la Tabla) Si o No de Administrable
     const administrableBodyTemplate = (rowData) => {
@@ -279,8 +285,6 @@ const handleFilter = (e) => {
 
 
     const applyFilters = (data, filters) => {
-        console.log('Aplicando filtros:', filters);
-        console.log('Datos originales:', data);
 
         return data.filter(item => {
             // Aplicar filtro global
@@ -331,25 +335,63 @@ const handleFilter = (e) => {
         import('xlsx').then((xlsx) => {
             // Aplicar filtros a los datos
             const filteredData = applyFilters(inventario, filters);
-
+    
             // Verificar si hay datos filtrados antes de exportar
             if (filteredData.length === 0) {
                 alert('No hay datos que coincidan con los filtros aplicados.');
                 return;
             }
-
-            // Convertir los datos filtrados a una hoja de cálculo
-            const worksheet = xlsx.utils.json_to_sheet(filteredData);
+    
+            // Renombrar y filtrar las columnas
+            const renamedData = filteredData.map(item => ({
+                'Propietario Equipo': item.idPropietarioFilial,
+                'Filial En Uso': item.idFilial,
+                'Empresa Pago': item.idFilialPago,
+                Marca: item.Marca,
+                Modelo: item.Modelo,
+                Serial: item.idSerial,
+                Placa: item.Placa,
+                'Nombre Equipo': item.NombreEquipo,
+                'Dirección IP': item.DireccionIp,
+                'Tipo Equipo': item.idTipoEquipo,
+                'Tipo Red': item.TipoRed,
+                Criticidad: item.idCriticidad,
+                País: item.Pais,
+                Sede: item.Sede,
+                'Edificio Sede': item.Edificio,
+                'Piso Sede': item.Piso,
+                Ubicación: item.Ubicacion,
+                'Tipo Servicio': item.TipoServicio,
+                'Detalle Servicio': item.DetalleServicio,
+                Aministrable: item.Administrable,
+                'Fecha vencimiento Soporte': item.FechaSoporte,
+                'Detalle Soporte': item.SoporteDetalle,
+                'Fecha vencimiento Garantía': item.FechaGarantia,
+                'Detalle Garantía': item.GarantiaDetalle,
+                EoL: item.FechaEoL,
+                'Detalle EoL': item.EolDetalle,
+                'Version Firmware': item.VrsFirmware,
+                'Numero Puertos': item.NumPuertos,
+                Estado: item.idEstado,
+                Comentario: item.Comentario,
+                Activo: item.Activo,
+                'Fecha Modificación': item.FechaModificacion
+                
+            }));
+    
+            // Convertir los datos renombrados a una hoja de cálculo
+            const worksheet = xlsx.utils.json_to_sheet(renamedData);
             const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
             const excelBuffer = xlsx.write(workbook, {
                 bookType: 'xlsx',
                 type: 'array'
             });
-
+    
             // Guardar el archivo Excel
             saveAsExcelFile(excelBuffer, 'inventario');
         });
     };
+    
 
 
 
@@ -407,7 +449,6 @@ const handleFilter = (e) => {
 
     //Ventana emergente de alerta confirmacion para editar la informacion de algun registro de la tabla 
     const handleFormTask = useCallback(() => {
-        console.log(SelectedData);
         Swal.fire({
             title: "",
             text: `¿Quiere editar la información del inventario con Serial ${SelectedData.idSerial}?`,
@@ -426,7 +467,6 @@ const handleFilter = (e) => {
 
     //Ventana emergente de alerta confirmacion para Reemplazar un equipo de la tabla 
     const handleFormReemplazar = useCallback(() => {
-        console.log(SelectedData);
         if (SelectedData.InStock === "No") {
             Swal.fire({
                 title: "",
@@ -465,10 +505,10 @@ const handleFilter = (e) => {
 
     // Propiedades específicas para columnas con filtros personalizados o estilos únicos
     const customColumnProps = {
-        enStock: {
+        activo: {
             filterMenuStyle: { width: '1rem' },
-            body: enStockBodyTemplate,
-            filterElement: enStockRowFilterTemplate,
+            body: ActivoBodyTemplate,
+            filterElement: ActivoRowFilterTemplate,
             style: { minWidth: '1rem' }
         },
         administrable: {
@@ -612,7 +652,8 @@ const handleFilter = (e) => {
                         body={FechaModificacionBodyTemplate}
                         style={{ minWidth: '10rem' }}
                     />
-                     <Column field="InStock" header="En Stock" filter {...customColumnProps.enStock} />
+                    {/*<Column field="InStock" header="En Stock" filter {...customColumnProps.enStock} />*/}
+                     <Column field="Activo" header="Activo" filter {...customColumnProps.activo} />
                     <Column
                         field="FechaInStock"
                         header="Fecha Activo"

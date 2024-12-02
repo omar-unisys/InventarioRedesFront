@@ -383,7 +383,7 @@ export const TableReporteDisponibilidad = () => {
                     <Column field="Description_1" header="Description_1" filter="true" />
                     <Column field="Description_2" header="Description_2" filter="true" />
                     <Column field="Description_3" header="Description_3" filter="true" />
-
+                    <Column field="Periodo" header="Periodo" filter="true" />
 
 
 

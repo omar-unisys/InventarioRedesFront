@@ -3,45 +3,47 @@ import AuthApi from '../services/AuthApi';
 
 export const RefreshToken = async () => {
   const keyName = 'jwt_token_fact';
-  const token_ = JSON.parse(Cookies.get(keyName));
+  
+  // Obtener token de las cookies
+  const token_ = Cookies.get(keyName);
+  if (!token_) {
+    console.error('No token found in cookies');
+    throw new Error('No token found in cookies');
+  }
 
-  // token_ = JSON.parse(token_);
-  console.log(token_);
+  console.log('Token encontrado:', token_);
 
   try {
-    
     const url = import.meta.env.VITE_URL_SEGURIDAD + 'refresh/';
 
-    const response = await AuthApi.getRefreshToken(url,token_);
-    // const response = await fetch(url, {
-    //   method: 'GET',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     Authorization: `Bearer ${token_}`
-    //   }
-    // });
-
+    // Solicitar un nuevo token
+    const response = await AuthApi.getRefreshToken(url, token_);
     const data = await response.json();
 
     if (response.ok) {
       const { token, expirationTime } = data;
 
+      // Calcula el tiempo de expiración (en milisegundos)
+      const now = new Date();
+      const expireTime = now.getTime() + 1000 * 60 * parseInt(import.meta.env.VITE_TIMEOUT_COOKIES);
 
-      var now = new Date();
-      var time = now.getTime();
-      var expireTime = time + 1000 * 60 * parseInt(import.meta.env.VITE_TIMEOUT_COOKIES);
+      // Establecer el nuevo token en cookies con la fecha de expiración
+      Cookies.set(keyName, JSON.stringify(token), { expires: new Date(expireTime), secure: true, sameSite: 'None' });
 
-      Cookies.set(keyName, JSON.stringify(token), { expires: (new Date(expireTime)), secure: true, sameSite: 'None' });
+      // Establecer la fecha de expiración en el localStorage
+      const expirationDate = Date.now() + expirationTime * 1000;
+      localStorage.setItem('tokenExpiration', expirationDate.toString());
 
-      
-      const expirationDate = Date.now() + expirationTime * 1000
-      localStorage.setItem('tokenExpiration', expirationDate);
-      return token;
+      console.log('Token renovado exitosamente:', token);
+      return token;  // Retornar el nuevo token
     } else {
-      // Maneja el error según sea necesario (redireccionar a login, mostrar mensaje, etc.)
+      // Manejar el error, por ejemplo, redirigir al login si no se puede renovar el token
+      console.error('Error al renovar el token:', data.message);
       throw new Error(data.message);
     }
   } catch (error) {
-    console.error('Error refreshing token', error);
+    console.error('Error al intentar renovar el token', error);
+    // Redirigir a la página de login si no se puede renovar el token
+    window.location.href = '/login'; // O cualquier redirección que necesites
   }
 };

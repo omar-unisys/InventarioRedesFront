@@ -16,6 +16,7 @@ const updateInventarioRedes = async (idInventarioRedes, inventario) => {
     // Convertir valores booleanos a enteros (0 o 1)
     inventario.Administrable = inventario.Administrable ? 1 : 0;
     inventario.InStock = inventario.InStock ? 1 : 0;
+    inventario.Activo = inventario.Activo ? 1 : 0;
 
     // Función auxiliar para convertir a ISO solo si hay un valor válido
     const toISOStringSafe = (dateValue) => {
@@ -83,17 +84,20 @@ const getTarifario = async () => {
 };
 
 //Funcion que comvierte en un objeto JSON los datos traidos de un JOIN entre las tablas de Inventario de Red y de Factuas
-const joinInventarioFactura = async () => {
-    const url = `${import.meta.env.VITE_URL_SERVICES}JoinInventarioFactura/`;
-    //trycatch para manejo de errores
+const joinInventarioFactura = async (month, year) => {
+    // Construir la fecha en formato "YYYY-MM-01"
+    const periodo = `${year}-${month.padStart(2, '0')}-01`;  // Añadir día fijo "01"
+
+    const url = `${import.meta.env.VITE_URL_SERVICES}JoinInventarioFactura/?periodo=${periodo}`;
+    
     try {
         const res = await fetch(url);
-        
+
         // Verifica si la respuesta es correcta (código 200)
         if (!res.ok) {
             throw new Error(`Error: ${res.status}`);
         }
-        
+
         const data = await res.json();
         return data;
     } catch (error) {
@@ -104,12 +108,15 @@ const joinInventarioFactura = async () => {
 
 
 
+
+
 const createInventarioRedes = async (inventario) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}invred/`;
     
     // Convertir valores booleanos a enteros (0 o 1)
     inventario.Administrable = inventario.Administrable ? 1 : 0;
     inventario.InStock = inventario.InStock ? 1 : 0;
+    inventario.Activo = inventario.Activo ? 1 : 0;
 
     // Función auxiliar para convertir a ISO solo si hay un valor válido
     const toISOStringSafe = (dateValue) => {
@@ -205,23 +212,41 @@ const getSumCantidadByDevices = async () => {
     return data;
 };
 
-const actualizarValorUnitario = async () => {
+// Actualiza los valores de la tabla de facturación
+const actualizarValorUnitario = async (month, year) => {
+    
     const url = `${import.meta.env.VITE_URL_SERVICES}actualizar-valor-unitario/`;
+    console.log(url);
+    // Validar que month y year estén definidos antes de hacer la solicitud
+    if (!month || !year) {
+        throw new Error("Mes y año son necesarios para actualizar el valor unitario");
+    }
+
     try {
         const res = await fetch(url, {
             method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json', // Asegúrate de incluir los headers necesarios
+            },
+            body: JSON.stringify({ month, year }),  // Enviar los datos en el body
         });
+
         if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
+            // Si la respuesta no es exitosa, manejar el error
+            const errorData = await res.json();
+            throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
         }
+
         const data = await res.json();
-        return data;
+        return data; // Retorna los datos del backend si la llamada es exitosa
     } catch (error) {
         console.error('Error al actualizar el valor unitario:', error);
-        throw error; // Propagar el error para manejarlo más arriba en la llamada
+        throw error;  // Propaga el error para manejarlo en el componente que llama esta función
     }
 };
 
+
+//envía el archivo de excel a la API CON EL REPORTE DE DISPONIBILIDAD   
 const UploadExcelDisponibilidad = async (file) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}importReporteDisponibilidad/`;
 
@@ -248,6 +273,39 @@ const UploadExcelDisponibilidad = async (file) => {
         throw error; // Propagar el error para manejarlo en el lugar donde se llama a la función
     }
 };
+
+//envía datos JSON a la API CON EL REPORTE DE DISPONIBILIDAD   
+const UploadReporteDisponibilidad = async (data, selectedMonth, selectedYear) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}uploadReporteDisponibilidad/`; 
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data: data,
+                selectedMonth: selectedMonth, // Usar las variables que se pasan como parámetros
+                selectedYear: selectedYear
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+
+    } catch (error) {
+        console.error('Error en la solicitud de subir el reporte:', error);
+        throw error;
+    }
+};
+
+
 
 const enviarCorreoCambioInStock = async (inventario, mensaje, destinatarios) => {
     const url = `${import.meta.env.VITE_URL_SERVICES}sendEmail`;
@@ -328,6 +386,38 @@ const deleteExistingRecords = async (month, year) => {
 };
 
 
+// Obtener las filiales
+const getFiliales = async () => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}filiales/`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  };
+  
+  // Obtener el inventario donde Activo = 1
+  const getInventarioActivos = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}inventarioactivos?month=${month}&year=${year}/`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  };
+  
+  // Obtener el inventario donde Activo = 0 (Equipos en Stock)
+  const getInventarioEnStock = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}inventarioenstock?month=${month}&year=${year}/`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  };
+
+  const getResultadosTotales = async (filial, month, year)=>{
+    const url = `${import.meta.env.VITE_URL_SERVICES}resumen-totales?filial=${filial}&month=${month}&year=${year}/`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  }
+  
+
 const InventarioRedesApi = {
     createInventarioRedes,
     getAll,
@@ -347,7 +437,12 @@ const InventarioRedesApi = {
     enviarCorreoCambioInStock,
     getEmailsDestinatarios,
     checkExistingRecords,
-    deleteExistingRecords
+    deleteExistingRecords,
+    UploadReporteDisponibilidad,
+    getFiliales,
+    getInventarioActivos,
+    getInventarioEnStock,
+    getResultadosTotales
 }
 
 export default InventarioRedesApi;

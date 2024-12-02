@@ -50,7 +50,7 @@ export const SidebarData = [
       },
       {
         title: 'Facturación Inventario Redes',
-        path: '/inventario/facturasInventarioRedes',
+        path: '/inventario/facturacionRedes',
         icon: <FaTable />
       },
       {

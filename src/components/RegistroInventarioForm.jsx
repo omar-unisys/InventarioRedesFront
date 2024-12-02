@@ -47,6 +47,7 @@ export const RegistroInventarioForm = () => {
         FechaModificacion: new Date(),
         Comentario: '',
         InStock: true,
+        Activo: false,
         hasError: false,
         cambioInStock: false,
         FechaInStock: null
@@ -64,7 +65,8 @@ export const RegistroInventarioForm = () => {
             setInventario(prevState => ({
                 ...prevState,
                 ...data,
-                InStock: data.InStock !== undefined ? data.InStock : true, // Asegúrate que InStock esté en true por defecto
+                InStock: data.InStock !== undefined ? data.InStock : true, // Asegura que InStock esté en true por defecto
+                Activo: data.Activo !== undefined ? data.Activo : false, // Asegurat que Activo esté en false por defecto
             }));
             
             if (idInventarioRedes) {
@@ -146,7 +148,6 @@ export const RegistroInventarioForm = () => {
     };
 
     const formatDate = (value) => {
-        console.log("Fecha: ", value);
         if (!value || isNaN(new Date(value).getTime())) {
             return ""; // Devuelve un string vacío si el valor es nulo o inválido
         } else {
@@ -194,7 +195,8 @@ export const RegistroInventarioForm = () => {
                     FechaIngreso: data.FechaIngreso ? new Date(data.FechaIngreso) : new Date(),
                     FechaModificacion: data.FechaModificacion ? new Date(data.FechaModificacion) : new Date(),
                     Comentario: data.Comentario || '',
-                    InStock: data.InStock ?? true, // Asegúrate de que no sea undefined
+                    InStock: data.InStock ?? true, // Asegura de que no sea undefined
+                    Activo: data.Activo ?? false, // Asegura de que no sea undefined
                     FechaInStock: data.FechaInStock ? new Date(data.FechaInStock) : new Date(),
                     hasError: data.hasError ?? false, // Para cualquier otro campo booleano
                     cambioInStock: data.cambioInStock ?? false,
@@ -263,19 +265,24 @@ export const RegistroInventarioForm = () => {
                             <Accordion.Header>Identificacion del equipo</Accordion.Header>
                             <Accordion.Body>
                                 <Row>
-                                    <Col sm={4}>
-                                        <FloatingLabel controlId="txtIdSerial" label="Serial" className="mb-3">
-                                            <Form.Control type="text" placeholder="Serial"
-                                                name='idSerial'
-                                                value={inventario.idSerial}
-                                                onChange={e => setInventario({ ...inventario, idSerial: e.target.value })}
-                                                required
-                                            />
-                                            <Form.Control.Feedback type="invalid">
-                                                Por favor Ingrese el Serial
-                                            </Form.Control.Feedback>
-                                        </FloatingLabel>
-                                    </Col>
+                                <Col sm={4}>
+    <FloatingLabel controlId="txtIdSerial" label="Serial" className="mb-3">
+        <Form.Control 
+            type="text" 
+            placeholder="Serial"
+            name='idSerial'
+            value={inventario.idSerial}
+            onChange={e => {
+                const trimmedValue = e.target.value.trim();  // Elimina los espacios antes y después
+                setInventario({ ...inventario, idSerial: trimmedValue });  // Actualiza el estado sin espacios
+            }}
+            required
+        />
+        <Form.Control.Feedback type="invalid">
+            Por favor Ingrese el Serial
+        </Form.Control.Feedback>
+    </FloatingLabel>
+</Col>
                                     <Col sm>
                                         <FloatingLabel controlId="txtMarca" label="Marca" className="mb-4">
                                             <Form.Control type="text" placeholder="Marca"
@@ -382,17 +389,18 @@ export const RegistroInventarioForm = () => {
 
                                     </Col>
 
+                                    
                                     <Col sm>
                                         <div className="flex align-items-center">
                                             <Checkbox
-                                                inputId="chInStock"
-                                                name="InStock"
-                                                value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInstock: true })}
-                                                checked={inventario.InStock} // Se asegura que el valor por defecto sea true
+                                                inputId="chActivo"
+                                                name="Activo"
+                                                value="Activo"
+                                                onChange={e => setInventario({ ...inventario, Activo: e.checked, cambioInstock: true})}
+                                                checked={inventario.Activo} // Se asegura que el valor por defecto sea true
                                                 disabled // Deshabilitar el checkbox
                                             />
-                                            <label htmlFor="chInStock" className="ml-2">En Stock</label>
+                                            <label htmlFor="chActivo" className="ml-2">Activo</label>
                                         </div>
 
                                     </Col>
@@ -569,6 +577,7 @@ export const RegistroInventarioForm = () => {
 
                                             >
                                                 <option value="">Seleccione la filial propietaria</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -576,6 +585,9 @@ export const RegistroInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -592,6 +604,7 @@ export const RegistroInventarioForm = () => {
                                                 onChange={e => setInventario({ ...inventario, idFilialPago: e.target.value })}
                                             >
                                                 <option value="">Seleccione la filial de Pago</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -599,6 +612,9 @@ export const RegistroInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -617,6 +633,7 @@ export const RegistroInventarioForm = () => {
                                             //disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione la filial</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -624,6 +641,9 @@ export const RegistroInventarioForm = () => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">

@@ -51,6 +51,7 @@ export const UpdateInventarioForm = () => {
         FechaModificacion: new Date(),
         Comentario: '',
         InStock: false,
+        Activo: true,
         idModified: false,
         idSerialAnterior: "",
         cambioInStock: false,
@@ -124,6 +125,7 @@ useEffect(() => {
             Dirección IP: ${inventario.DireccionIp}
             Tipo de Equipo: ${inventario.idTipoEquipo}
             Sede: ${inventario.Sede}
+            Criticidad: ${inventario.idCriticidad}
         `;
     
         let mensaje = '';
@@ -132,9 +134,9 @@ useEffect(() => {
         if (inventario.cambioInStock) {
             if (inventario.InStock === false) {
                 inventario.FechaInStock = inventario.FechaModificacion;
-                mensaje += `El equipo ha pasado a estado Activo. Por favor, pasar a Monitoreo.\n\n`;
+                mensaje += `El equipo ha pasado a estado Activo. Por favor, ingresar a Monitoreo.\n\n`;
             } else {
-                mensaje += `El equipo ha pasado a Stock. Por favor, quitar de Monitoreo.\n\n`;
+                mensaje += `El equipo ha pasado a Stock. Por favor, retirar de Monitoreo.\n\n`;
             }
         }
     
@@ -152,9 +154,7 @@ useEffect(() => {
         if (mensaje) {
             try {
                 const destinatarios = await obtenerDestinatarios();
-                console.log("Destinatarios: ", destinatarios);
                 await InventarioRedesApi.enviarCorreoCambioInStock(inventario, mensaje, destinatarios);
-                console.log("Correo enviado con los cambios:");
             } catch (error) {
                 console.error("Error al enviar correo:", error);
             }
@@ -198,9 +198,7 @@ useEffect(() => {
     const obtenerDestinatarios = async () => {
         try {
             const data = await InventarioRedesApi.getEmailsDestinatarios(); // Espera el JSON directamente
-            console.log("Datos recibidos de la API:", data); // Imprime la respuesta
             const correos = data.map(destinatario => destinatario.email);
-            console.log("Correos extraídos:", correos);
             return correos;
         } catch (error) {
             console.error("Error en obtenerDestinatarios:", error);
@@ -215,7 +213,7 @@ useEffect(() => {
     
 
     const formatDate = (value) => {
-        console.log("Fecha: ", value);
+        
         if (!value || isNaN(new Date(value).getTime())) {
             return ""; // Devuelve un string vacío si el valor es nulo o inválido
         } else {
@@ -229,9 +227,6 @@ useEffect(() => {
     const getInventarioRedesBy = async (id) => {
         try {
             const responseData = await InventarioRedesApi.getInventarioRedesByID(id);
-            
-            //console.log("Datos de la API:", responseData);
-            
             if (responseData.length > 0) {
                 const [data] = responseData;  // Desestructuración para obtener el primer elemento
     
@@ -261,9 +256,7 @@ useEffect(() => {
                 // Actualiza los valores booleanos
                 data.Administrable = toBoolean(data.Administrable);
                 data.InStock = toBoolean(data.InStock);
-    
-                // Verifica qué campos están siendo establecidos
-                console.log("Datos que se van a establecer:", data);
+                data.Activo = toBoolean(data.Activo);
     
                 // Actualiza el estado con el primer elemento, asegurando que todos los campos se asignen
                 setInventario({
@@ -314,13 +307,11 @@ useEffect(() => {
             const newDate = new Date(year, month - 1, day);
             setInventario((prevInventario) => {
                 const updatedInventario = { ...prevInventario, [fieldName]: newDate };
-                //console.log(updatedInventario); // Agregar aquí
                 return updatedInventario;
             });
         } else {
             setInventario((prevInventario) => {
                 const updatedInventario = { ...prevInventario, [fieldName]: null };
-                //console.log(updatedInventario); // Agregar aquí
                 return updatedInventario;
             });
         }
@@ -471,14 +462,26 @@ useEffect(() => {
                                     </Col>
                                     
                                     <Col sm>
-                                        <div className="flex align-items-center">
-                                            <Checkbox inputId="chInStock" name="InStock" value="InStock"
-                                                onChange={e => setInventario({ ...inventario, InStock: e.checked, cambioInStock:true })}
-                                                checked={inventario.InStock || false}>
-                                            </Checkbox>
-                                            <label htmlFor="chInStock" className="ml-2">En Stock</label>
-                                        </div>
-                                    </Col>
+    <div className="flex align-items-center">
+        <Checkbox
+            inputId="chActivo"
+            name="Activo"
+            value="Activo"
+            onChange={e => {
+                const isActive = e.checked;
+                setInventario({
+                    ...inventario,
+                    Activo: isActive,
+                    InStock: !isActive, // Cambia InStock basado en Activo
+                    cambioInStock: true // Indica que hubo un cambio en InStock
+                });
+            }}
+            checked={inventario.Activo || false}
+        />
+        <label htmlFor="chActivo" className="ml-2">Activo</label>
+    </div>
+</Col>
+
                                 </Row>
                             </Accordion.Body>
                         </Accordion.Item>
@@ -652,6 +655,7 @@ useEffect(() => {
 
                                             >
                                                 <option value="">Seleccione la filial propietaria</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -659,6 +663,9 @@ useEffect(() => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -675,6 +682,7 @@ useEffect(() => {
                                                 onChange={e => setInventario({ ...inventario, idFilialPago: e.target.value })}
                                             >
                                                 <option value="">Seleccione la filial de Pago</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -682,6 +690,9 @@ useEffect(() => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -700,6 +711,7 @@ useEffect(() => {
                                             //disabled={isDisabled}
                                             >
                                                 <option value="">Seleccione la filial</option>
+                                                <option value="INTEIA">INTEIA</option>
                                                 <option value="INTERCHILE">INTERCHILE</option>
                                                 <option value="INTERNEXA">INTERNEXA</option>
                                                 <option value="INTERVIAL">INTERVIAL</option>
@@ -707,6 +719,9 @@ useEffect(() => {
                                                 <option value="ISA BOLIVIA">ISA BOLIVIA</option>
                                                 <option value="REP">REP</option>
                                                 <option value="RUTA COSTERA">RUTA COSTERA</option>
+                                                <option value="RUTA DE LOA">RUTA DE LOA</option>
+                                                <option value="RUTA DEL ESTE">RUTA DEL ESTE</option>
+                                                <option value="TRANSELCA">TRANSELCA</option>
                                                 <option value="XM">XM</option>
                                             </Form.Control>
                                             <Form.Control.Feedback type="invalid">
@@ -833,12 +848,7 @@ useEffect(() => {
                         <Col ></Col>
                     </Row>
 
-
-
                 </Container>
-
-
-
 
             </Form>
         </>

@@ -26,6 +26,9 @@ export const ExcelReaderInventarioRedes = () => {
         fileInputRef.current.click(); // Simula un clic en el input de archivo
     };
 
+
+
+
     const handleFileUpload = async () => {
         if (!file) {
             toast.show({ severity: 'error', summary: 'Error', detail: 'Por favor, selecciona un archivo.' });
@@ -42,7 +45,7 @@ export const ExcelReaderInventarioRedes = () => {
             const worksheet = workbook.Sheets[sheetName];
 
             
-        // Lee la tercera hoja "Equipos Disponibles"
+        // Lee la hoja "Equipos Disponibles"
         const thirdSheetName = "Equipos Disponibles";
         const thirdWorksheet = workbook.Sheets[thirdSheetName];
 
@@ -114,20 +117,32 @@ export const ExcelReaderInventarioRedes = () => {
             
 
             // Función para convertir valores de criticidad
-            const convertCriticidad = (value) => {
-                const mapping = {
-                    "Baja": "Baja",
-                    "Media": "Media",
-                    "Alta": "Alta",
-                    "Muy Alta": "Muy Alta",
-                    "Bajo": "Baja",
-                    "Medio": "Media",
-                    "Alto": "Alta",
-                    "Muy Alto": "Muy Alta",
-                    "Muy alta": "Muy Alta",
-                };
-                return mapping[value] || null;
-            };
+            // Función para convertir valores de criticidad
+const convertCriticidad = (value) => {
+    if (typeof value !== 'string') {
+        return null; // Si el valor no es una cadena, retornamos null
+    }
+
+    // Convertir a minúsculas y luego capitalizar la primera letra
+    const normalizedValue = value.trim().toLowerCase().replace(/(?:^|\s)\S/g, a => a.toUpperCase());
+
+    // Mapeo de valores aceptados
+    const mapping = {
+        "Baja": "Baja",
+        "Media": "Media",
+        "Alta": "Alta",
+        "Muy Alta": "Muy Alta",
+        "Bajo": "Baja",
+        "Medio": "Media",
+        "Alto": "Alta",
+        "Muy Alto": "Muy Alta",
+        "Muy alta": "Muy Alta",
+    };
+
+    // Devolvemos el valor mapeado, o null si no se encuentra
+    return mapping[normalizedValue] || null;
+};
+
 
             const fieldMapping = {
                 'Serial': 'idSerial',
@@ -162,6 +177,7 @@ export const ExcelReaderInventarioRedes = () => {
                 'Comentario': 'Comentario',
                 'Conectado': 'Conectado',
                 'InStock': 'InStock',
+                'Activo':'Activo',
                 'Placa': 'Placa'
             };
 
@@ -177,7 +193,10 @@ export const ExcelReaderInventarioRedes = () => {
                         if (typeof value === 'string') {
                             value = value.replace(/(\r\n|\n|\r)/gm, ""); // Elimina saltos de línea
                         }
-            
+                        // Limpieza específica para idSerial
+                        if (field === 'idSerial' && typeof value === 'string') {
+                            value = value.replace(/\s+/g, "").trim(); // Elimina todos los espacios en blanco
+                        }
                         if (field.includes('Fecha')) {
                             transformedRow[field] = convertDate(value) || "0000-00-00"; // Ejemplo si no se permite null
                         } else if (field === 'Administrable') {
@@ -192,7 +211,14 @@ export const ExcelReaderInventarioRedes = () => {
                         transformedRow[field] = "";
                     }
                 }
+                // Aplicar la lógica de "Criticidad" si es Comunicaciones y Filial En Uso es REP
+                if (transformedRow['idTipoEquipo'] === 'Comunicaciones' && transformedRow['idFilial'] === 'REP' && transformedRow['idCriticidad']) {
+                    //transformedRow['idCriticidad'] += '-REP';  // Agregar "-REP" al valor de criticidad
+                }
+
                 transformedRow['FechaModificacion'] = currentDate;
+                transformedRow['InStock'] = 0; // Establece InStock en 0 para esta hoja
+                transformedRow['Activo'] = 1; // Establece Activo en 1 para esta hoja
                 return transformedRow;
             });
             
@@ -208,7 +234,7 @@ export const ExcelReaderInventarioRedes = () => {
         
         
 
-        // Determinar el endRow para la tercera hoja de manera similar
+        // Determinar el endRow para la tercera hoja 
         let thirdEndRow = startRow;
         for (let r = startRow; r <= thirdRange.e.r; r++) {
             const cell = thirdWorksheet[XLSX.utils.encode_cell({ r: r, c: 0 })]; // Columna 0 es Serial
@@ -220,24 +246,25 @@ export const ExcelReaderInventarioRedes = () => {
         const thirdJsonData = XLSX.utils.sheet_to_json(thirdWorksheet, {
             header: thirdHeaders,
             range: { s: { r: startRow, c: 0 }, e: { r: thirdEndRow, c: thirdRange.e.c } }
-
         });
 
         const mappedThirdData = thirdJsonData.map(row => {
             const transformedRow = {};
             for (const [header, field] of Object.entries(fieldMapping)) {
-                
-        
                 if (row[header] !== undefined) {
                     let value = row[header];
                     if (typeof value === 'string') {
-                        value = value.replace(/(\r\n|\n|\r)/gm, ""); // Elimina saltos de línea
+                        value = value.replace(/(\r\n|\n|\r)/gm, "").trim(); // Elimina saltos de línea
+                    }
+        
+                    // Limpieza específica para idSerial
+                    if (field === 'idSerial' && typeof value === 'string') {
+                        value = value.replace(/\s+/g, "").trim(); // Elimina todos los espacios en blanco
                     }
         
                     // Depuración de fecha
                     if (field.includes('Fecha')) {
                         const convertedDate = convertDate(value);
-                        
                         transformedRow[field] = convertedDate || "0000-00-00";
                     } else if (field === 'Administrable') {
                         transformedRow[field] = convertYesNo(value) || 0;
@@ -247,13 +274,42 @@ export const ExcelReaderInventarioRedes = () => {
                         transformedRow[field] = value || null;
                     }
                 } else {
-                    transformedRow[field] = "";
+                    transformedRow[field] = null; // Asignar null si el valor está indefinido
+                }
+                
+                // Validación para idFilialPago, idFilial, idTipoEquipo (asegurarse de asignar valores predeterminados)
+                if (field === 'idFilialPago' || field === 'idFilial') {
+                    // Si es null o una cadena vacía, asignar "ISA"
+                    if (!transformedRow[field]) {
+                        transformedRow[field] = "ISA";
+                    }else if(transformedRow[field] ==="ITX"){
+                        transformedRow[field] = "INTERNEXA";
+                    }
+                }
+                if (field === 'idEstado') {
+                    // Si es null o una cadena vacía, asignar "Switche"
+                    if (!transformedRow[field]) {
+                        transformedRow[field] = "Disponible";
+                    }
+                }
+                
+                if (field === 'idTipoEquipo') {
+                    // Si es null o una cadena vacía, asignar "Switche"
+                    if (!transformedRow[field]) {
+                        transformedRow[field] = "Switche";
+                    }
                 }
             }
+        
+            // Asignación de valores adicionales
             transformedRow['InStock'] = 1; // Establece InStock en 1 para esta hoja
+            transformedRow['Activo'] = 0; // Establece Activo en 0 para esta hoja
             transformedRow['FechaModificacion'] = currentDate;
+        
             return transformedRow;
         });
+        
+        
         
         console.log('Mapped Third Data:', mappedThirdData);
         
@@ -281,19 +337,20 @@ export const ExcelReaderInventarioRedes = () => {
 
     // Función para procesar datos en lotes
     const processBatch = async (data) => {
-        const batchSize = 100; // Cambia este valor según sea necesario
+        const batchSize = 100;
         for (let i = 0; i < data.length; i += batchSize) {
             const batch = data.slice(i, i + batchSize);
-            await Promise.all(batch.map(async (item, index) => {
+            for (let item of batch) {
                 try {
                     await InventarioRedesApi.createInventarioRedes(item);
                 } catch (err) {
-                    console.error(`Error al procesar la fila ${i + index + 1}:`, err);
-                    toast.show({ severity: 'error', summary: 'Error', detail: `Error en la fila ${i + index + 1}: ${err.message}` });
+                    console.error(`Error al procesar la fila ${i + 1}:`, err);
+                    toast.show({ severity: 'error', summary: 'Error', detail: `Error en la fila ${i + 1}: ${err.message}` });
                 }
-            }));
+            }
         }
     };
+    
 
     return (
         <div>

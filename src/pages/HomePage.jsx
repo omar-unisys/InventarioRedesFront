@@ -2,6 +2,7 @@ import React from 'react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { Home } from '../components/Home';
 
+/*
 export const HomePage = () => {
   return (
     <ProtectedRoute>
@@ -9,3 +10,10 @@ export const HomePage = () => {
     </ProtectedRoute>
   )
 }
+*/
+
+export const HomePage = () => {
+  return (
+    <Home />
+  );
+};

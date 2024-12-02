@@ -18,10 +18,12 @@ import { TableReporteDisponibilidad } from './components/TableReporteDisponibili
 import { ReemplazarInventarioForm } from './components/ReemplazarInventarioForm'; 
 import { TableLineaBase } from './components/TableLineaBase'; 
 import { ExcelReaderInventarioRedes } from './components/ExcelReaderInventarioRedes'; 
-import { SelectMonth  } from './components/SelectMonth'; 
+import { SelectMonthReporteDisponibilidad  } from './components/SelectMonthReporteDisponibilidad'; 
+import { SelectMonthFacturasInventarioRed  } from './components/SelectMonthFacturasInventarioRed'; 
 
 
 function App() {
+  /*
   const resetTimer = useIdleTimer(() => {
     const dateSession = Cookies.get('dateSession_fact');
     let finalizaSesion = false;
@@ -63,13 +65,13 @@ function App() {
       });
     }
   });
-
+  */
   const navigate = useNavigate();
   const currentLocation = useLocation(); // Renombrar a currentLocation
 
   return (
     <>
-      <AuthProvider>
+      {/*<AuthProvider>*/}
         <IsVisibleMenu />
         <Routes>
           <Route path="/" element={<HomePage/>} />
@@ -77,16 +79,18 @@ function App() {
           <Route path="/inventario/inventarioRedes/" element={<TableInventarioRedes/>} />
           <Route path="/inventario/inventarioRedes/nuevo" element={<RegistroInventarioForm/>} />
           <Route path="/inventario/inventarioRedes/modificar/:idInventarioRedes" element={<UpdateInventarioForm/>} />
-          <Route path="/inventario/facturasInventarioRedes/" element={<TableFacturasInventarioRedes/>} />
           <Route path="/inventario/Tarifario/" element={<TableTarifario/>} />
           <Route path="/inventario/reporteDisponibilidad/ver" element={<TableReporteDisponibilidad/>} />
           <Route path="/inventario/lineabase/" element={<TableLineaBase/>} />
           <Route path="/inventario/ReemplazarInventarioForm/:idInventarioRedes" element={<ReemplazarInventarioForm/>} />
           <Route path="/inventario/ExcelReaderInventarioRedes/" element={<ExcelReaderInventarioRedes/>} />
-          <Route path="/inventario/reporteDisponibilidad/" element={<SelectMonth/>} />
-          <Route path="/login" element={<Login/>} />
+          <Route path="/inventario/reporteDisponibilidad/" element={<SelectMonthReporteDisponibilidad/>} />
+          <Route path="/inventario/facturacionRedes/" element={<SelectMonthFacturasInventarioRed/>} />
+          <Route path="/inventario/facturacionRedes/ver" element={<TableFacturasInventarioRedes/>} />
+
+          {/*<Route path="/login" element={<Login/>} />*/}
         </Routes>
-      </AuthProvider>
+      {/*</AuthProvider>*/}
     </>
   )
 }
