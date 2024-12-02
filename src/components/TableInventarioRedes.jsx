@@ -375,8 +375,8 @@ const handleFilter = (e) => {
                 Estado: item.idEstado,
                 Comentario: item.Comentario,
                 Activo: item.Activo,
-                'Fecha Modificación': item.FechaModificacion
-                
+                'Fecha Modificación': item.FechaModificacion,
+                'Fecha Activación': item.FechaInStock
             }));
     
             // Convertir los datos renombrados a una hoja de cálculo
