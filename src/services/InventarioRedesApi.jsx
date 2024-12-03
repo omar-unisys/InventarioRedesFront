@@ -416,6 +416,32 @@ const getFiliales = async () => {
     const data = await res.json();
     return data;
   }
+
+  const getTotalFacturado = async (month, year)=>{
+    const url = `${import.meta.env.VITE_URL_SERVICES}total-facturado?month=${month}&year=${year}/`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  }
+  
+  const getISE = async (month, year) => {
+    const url = `${import.meta.env.VITE_URL_SERVICES}total-ise?month=${month}&year=${year}`; // Eliminar la barra diagonal extra
+    try {
+      const res = await fetch(url);
+      
+      // Verificar que la respuesta es exitosa (código 200)
+      if (!res.ok) {
+        throw new Error(`Error al obtener los datos de ISE: ${res.statusText}`);
+      }
+  
+      const data = await res.json();
+      // Depuración: Verificar los datos recibidos
+      return data;
+    } catch (error) {
+      console.error('Error al obtener los datos de ISE:', error);
+      return [];  // Retorna un arreglo vacío en caso de error
+    }
+  };
   
 
 const InventarioRedesApi = {
@@ -442,7 +468,9 @@ const InventarioRedesApi = {
     getFiliales,
     getInventarioActivos,
     getInventarioEnStock,
-    getResultadosTotales
+    getResultadosTotales,
+    getTotalFacturado,
+    getISE
 }
 
 export default InventarioRedesApi;

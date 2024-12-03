@@ -336,6 +336,9 @@ export const TableFacturasInventarioRedes = () => {
             const inventarioActivos = await InventarioRedesApi.getInventarioActivos(month, year);
             const inventarioEnStock = await InventarioRedesApi.getInventarioEnStock(month, year);
             const reporteDisponibilidad = await InventarioRedesApi.getDisponibilidadByMonth(month, year);
+            const totalFacturado = await InventarioRedesApi.getTotalFacturado(month, year);
+            const ISE = await InventarioRedesApi.getISE(month, year);
+
 
             // Crear el libro de Excel
             const workbook = {
@@ -343,10 +346,6 @@ export const TableFacturasInventarioRedes = () => {
                 SheetNames: []
             };
 
-            // Crear la hoja vacía llamada "Total facturacion mes" (sin agregar filas de datos)
-            const worksheetFacturacion = xlsx.utils.aoa_to_sheet([[]]); // Hoja vacía
-            workbook.SheetNames.push('Total facturacion mes');
-            workbook.Sheets['Total facturacion mes'] = worksheetFacturacion;
 
             // Recorrer las filiales con un ciclo for...of para poder usar await dentro
             for (const filial of filiales) {
@@ -434,25 +433,7 @@ export const TableFacturasInventarioRedes = () => {
                 workbook.SheetNames.push(filial.idFilial);  // Nombre de la hoja combinada
                 workbook.Sheets[filial.idFilial] = worksheetFilialCombinada;
 
-                // Mapeo de cada fila de datos para la facturación
-                for (const item of resumenTotales) {
-                    // Obtener los valores de facturación de esta filial
-                    const valorFacturacionUSD = parseFloat(item.TotalFacturarUSD) || 0;  // Valor de facturación
-                    const ise = parseFloat(item.MaxDescuentoRecargoVolumen) || 0;  // ISE (puedes ajustar este valor según el cálculo que necesites)
-                    const actividadesEspeciales = parseFloat(item.MaxValorUnitarioUSD) || 0;  // Actividades especiales en moneda local (ajustar según sea necesario)
-                    const moneda = 'USD';  // Establecer la moneda. Si tienes más detalles, puedes hacer esta asignación dinámica.
-
-                    const nuevaFila = [
-                        filial.idFilial,
-                        valorFacturacionUSD.toFixed(2),
-                        ise.toFixed(2),
-                        actividadesEspeciales.toFixed(2),
-                        moneda
-                    ];
-
-                    // Usar sheet_add_aoa para agregar las nuevas filas
-                    xlsx.utils.sheet_add_aoa(worksheetFacturacion, [nuevaFila], { origin: -1 });
-                }
+                
             }
 
             // Crear una hoja con el inventario de equipos activos (Activo = 1)
@@ -562,6 +543,38 @@ export const TableFacturasInventarioRedes = () => {
             // Agregar la hoja de "Equipos en Stock" al libro de trabajo
             workbook.SheetNames.push('Equipos en Stock');
             workbook.Sheets['Equipos en Stock'] = worksheetInventarioDisponibles;
+
+
+           // Obtener el total de ISE
+const totalISE = ISE.reduce((sum, item) => sum + parseFloat(item.ISE || 0), 0);
+
+// Agregar la fila con el total de ISE
+const ISEWithTotal = [...ISE, { ISE: totalISE.toFixed(2) }];
+
+// Crear la hoja llamada "Total facturacion mes" con los datos de Total Facturado y ISE
+const worksheetTotalFacturacion = xlsx.utils.aoa_to_sheet([
+  ['Filial', 'Total Facturado (USD)', 'ISE'],
+  ...totalFacturado.map((item, index) => {
+    // Obtener el valor de ISE de la misma posición, ahora con la fila extra agregada
+    const iseValue = ISEWithTotal[index]?.ISE || '0.00';  // Asegúrate de que estamos accediendo correctamente al valor de ISE
+    
+    
+    return [
+      item.Filial,  // Filial
+      parseFloat(item.TotalFacturado).toFixed(2),  // Total Facturado
+      parseFloat(iseValue).toFixed(2)  // ISE
+    ];
+  })
+]);
+
+
+
+
+// Agregar la hoja de "Total facturacion mes" al libro de trabajo
+workbook.SheetNames.push('Total facturacion mes');
+workbook.Sheets['Total facturacion mes'] = worksheetTotalFacturacion;
+
+
 
             // Convertir el libro de trabajo a un buffer
             const excelBuffer = xlsx.write(workbook, {
